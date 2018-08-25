@@ -1,0 +1,197 @@
+module npt_model {
+  // --- NAMESPACE / PREFIX DEFINITION ---------------------------------
+  namespace "urn:codeclone:vdbser:dbs:npt_model";
+  prefix "npt_model";
+
+  // --- LINKAGE (IMPORTS / INCLUDES) ----------------------------------
+
+  // --- META-INFORMATION ----------------------------------------------
+  organization
+    "codeclone";
+  contact
+    "Henrique Moreira
+     h@serrasqueiro.com
+     =======================================
+     github: https://github.com/serrasqueiro/codeclone.git
+     =======================================
+    ";
+  description
+    "This module contains the definitions for npt_model of the corresponding 
+     vdb tables.
+    ";
+  revision 2018-08-25 {
+    description "First draft.";
+    reference "https://github.com/serrasqueiro/codeclone/tree/master/";
+  }
+
+  // --- TYPE DEFINITIONS ----------------------------------------------
+  typedef strict-table-name {
+    type string {
+      length 4..14;
+    }
+    description
+      "Strict table name, without any suffix.";
+  }
+  typedef strict-table-name-list {
+    type string {
+      length 4..max;
+      pattern '([a-z][a-z0-9_]*)([;][a-z][a-z0-9_]*)*';
+    }
+    description
+      "Strict table name, without any suffix, separated 
+       by semi-colon.
+      ";
+  }
+
+  typedef vdb-filename {
+    type string {
+      length 5..16;
+      pattern '[a-z][a-z0-9_]*.vdb';
+    }
+    description
+      "file.vdb filename, as stored in file-system.";
+  }
+
+  typedef ddb-unique-id {
+    type string {
+      length 10..12;
+      pattern '[P-R][1-9][0-9]{3}\.[1-8][0-9]{3}';
+    }
+    default 'P1000.1000';
+    description
+      "vdb bought unique identifier:
+         - P    public id
+         - Q    public writable
+         - R    restricted
+
+       Xnnnn.9nnn are reserved for future use.
+      ";
+  }
+
+  // --- MODULE DEFINITIONS---------------------------------------------
+
+  container MainRoot {
+    description
+      "Main root of the model.
+      ";
+    container Concrete {
+      description
+        "Concrete list of tables.";
+      leaf tableNames {
+        type strict-table-name-list;
+        default "npt_list;npt_alias";
+        config false;
+        description
+          "Semi-colon separated list of tables.";
+      }
+    }
+
+    container PhysicalData {
+      description
+        "Description of each one of the tables structures.
+        ";
+      list vdbFile {
+        key filename;
+        //min-elements 1;
+        description
+          "List of vdb files.";
+        leaf filename {
+          type vdb-filename;
+          description
+            "The physical filename:
+              - '.vdb' extension.
+            ";
+        }
+        //leaf dbFilename {
+        //  type vdb-filename;
+        //  default "ntp_list.vdbx";
+        //}
+      }
+    }
+
+    container TableContent {
+      description
+        "Description of each one of the tables.
+        ";
+      container npt_list {
+        description
+          "The 'npt_list' table.";
+        uses vdb-header;
+        uses optional-date;
+        uses optional-key-spec;
+      }
+    }
+  }
+
+
+  grouping vdb-header {
+   description
+      "A header contains e.g. '#!vdb::',
+       then the type of file ('txt'), an indication 
+       whether it is a tabular database ('db;'), 
+       followed by the dbb-unique-id ('P1001.1201').
+      ";
+    leaf vdbIdentifier {
+      type string {
+        pattern '!vdb';
+      }
+      default '!vdb';
+      config false;
+      description
+        "vdb header identifier, first line.
+         It must start with an hash ('#').
+        ";
+    }
+
+    leaf extensionSubset {
+      type empty;
+      description
+        "This is meant for special extensions, like 
+         CVS ',v' files, etc.
+        ";
+    }
+
+    leaf formatAlias {
+      type enumeration {
+        enum txt {
+          description "txt: Text file.";
+        }
+      }
+      description
+        "Format alias name.";
+    }
+
+    leaf dbTabularType {
+      type enumeration {
+        enum db {
+          description "db: Tabular, semi-colon separated.";
+        }
+      }
+      description
+        "This gets indicated by 'db;'
+        ";
+    }
+
+    leaf dbUniqueID {
+      type ddb-unique-id;
+      description
+        "Database table structure ddb unique id.";
+    }
+  }
+
+  grouping optional-date {
+    description
+      "Usually the second line, optional, as
+          '# date:YYYYmmdd'
+      ";
+  }
+
+  grouping optional-key-spec {
+    description
+      "Optional key description.
+       '# pkey:column_list'
+
+       Where 'column_list' is a semi-colon separate list of integers.
+      ";
+  }
+}

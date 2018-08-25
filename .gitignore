@@ -3,6 +3,9 @@
 # we want only a simple file:
 int_path/git_My_quick_setup.docx
 
+# Hint files
+.todo.txt
+
 # Prerequisites
 *.d
 
