@@ -1,0 +1,14 @@
+# any directory named: int_path
+### int_path/
+# we want only a simple file:
+int_path/git_My_quick_setup.docx
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
