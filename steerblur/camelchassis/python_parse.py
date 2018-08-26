@@ -83,14 +83,17 @@ def do_dump (outFile, inArgs):
       anyOpt = True
       del args[ 0 ]
       verbose += 1
+      continue
     if args[ 0 ]=='-u' or args[ 0 ]=='--force-unix':
       anyOpt = True
       del args[ 0 ]
       forceUnix = True
+      continue
     if args[ 0 ]=='-o':
       anyOpt = True
       outName = args[ 1 ]
       del args[ :2 ]
+      continue
   isVerbose = verbose>0
   # Process args (inputs):
   for aName in args:
