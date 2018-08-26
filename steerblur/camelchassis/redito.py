@@ -34,7 +34,14 @@ class BasicHistogram:
 #
 class BinStream:
   def init_bin_stream (self):
+    self.streamType = "UCS2"
     self.bomMarker = (0x0, 0x0)
+
+
+  def set_textlike (self, shortString="TEXT"):
+    assert len( shortString )<10
+    assert type( shortString )==str
+    self.streamType = shortString
 
 
   def isLittleEndian (self):
@@ -108,6 +115,7 @@ class TextRed(BinStream):
       if hasBOM:
         self.add_content( self.buf[ 2: ], 2 )
       else:
+        self.set_textlike()
         self.add_content( self.buf, 1 )
     return isOk
 
@@ -187,7 +195,80 @@ class TextRed(BinStream):
 
 
 #
+# CLASS WildStr
+#
+class WildStr:
+  def __init__ (self, aStr, wildCard="@@"):
+    self.s = ""
+    self.wild = wildCard
+    self.left = ""
+    self.middle = ""
+    self.right = ""
+    if type( aStr )==str:
+      self.init_wild_str( aStr, [self.wild] )
+    pass
+
+
+  def clear (self):
+    self.s = ""
+    self.left = ""
+    self.middle = ""
+    self.right
+
+
+  def init_wild_str (self, aStr, wildList):
+    assert type( aStr )==str
+    for w in wildList:
+      if len( w )<=0:
+        assert type( w )==str
+        self.s = aStr
+        return False
+      spl = aStr.split( w )
+      if len( spl )==2:
+        self.left = spl[ 0 ]
+        self.right = spl[ 1 ]
+        self.middle = ""
+      else:
+        self.s = aStr
+    return True
+
+
+  def by_name (self, aName):
+    if len( self.s )<=0:
+      self.middle = aName
+      self.s = self.left + self.middle + self.right
+    return self.s
+
+
+  def by_pathname (self, aName):
+    if len( self.s )<=0:
+      pos = any_chr_rev( aName, ['/', '\\'] )
+      if pos>=0:
+        self.middle = aName[ pos+1: ]
+      else:
+        self.middle = aName
+      self.s = self.left + self.middle + self.right
+    return self.s
+
+
+#
+# any_chr_rev()
+#
+def any_chr_rev (aStr, anyChr):
+  idx = len( aStr )
+  while idx > 0:
+    idx -= 1
+    c = aStr[ idx ]
+    assert type( c )==str
+    found = c in anyChr
+    if found:
+      return idx
+  return -1
+
+
+#
 # Test suite
+#
 if __name__ == "__main__":
   import sys
   args = sys.argv[ 1: ]

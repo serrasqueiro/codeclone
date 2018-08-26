@@ -19,3 +19,6 @@ int_path/git_My_quick_setup.docx
 *.pyc
 __pycache__
 
+# Backup files (e.g. from emacs)
+*.*~
+

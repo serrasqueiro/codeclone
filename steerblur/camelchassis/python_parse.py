@@ -7,7 +7,7 @@
 """
 
 
-from redito import TextRed
+from redito import TextRed, WildStr
 
 
 #
@@ -76,10 +76,17 @@ def do_dump (outFile, inArgs):
       semiEmptyLines = pparse.histogram.semiEmpty
       if isTextOk:
         if outName:
-          output = open( outName, "w" )
+          ws = WildStr( outName )
+          s = ws.by_pathname( aName )
+          if s!=outName and isVerbose:
+            sys.stderr.write("Output to: " + s + "\n")
+          output = open( s, "w" )
         for aLine in pparse.lines:
           output.write(aLine + "\n")
         if outName:
+          if isVerbose:
+            if pparse.streamType!="TEXT":
+              sys.stderr.write("Warn: " + aName + ": " + pparse.streamType + "\n")
           output.close()
       else:
         code = 8
