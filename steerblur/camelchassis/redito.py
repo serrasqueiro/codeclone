@@ -133,13 +133,17 @@ class TextRed(BinStream):
       if isLittle:
         for p in data:
           even = (idx % 2)==0
-          if even:
-            assert type(p)==int
-            coil.append( p )
+          if type(p)==int:
+            val = p
           else:
-            if p>0:
+            val = ord(p)
+          assert type(val)==int
+          if even:
+            coil.append( val )
+          else:
+            if val>0:
               self.histogram.seen[ 256 ] += 1
-              self.nonASCII7.append( (lineNr, idx, format(p, "#02x")) )
+              self.nonASCII7.append( (lineNr, idx, format(val, "#02x")) )
           idx += 1
         isOk = self.add_content( coil, 1 )
       return isOk

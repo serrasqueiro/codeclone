@@ -14,10 +14,13 @@ from redito import TextRed, WildStr
 # dump_usage()
 #
 def dump_usage ():
-  print("""python_parse COMMAND [options]
+  print("""python_parse COMMAND [options] file(s)
 
 Command is one of:
   dump      Dump (and check) input file(s).
+\t\t-v    Verbose (or -v -v ...)
+\t\t-o    Output to (use @@ for: similar as input)
+\t\t-u    Force input to be Unix (no CRs)
 """)
   return 0
 
@@ -26,6 +29,17 @@ Command is one of:
 # test_python_parse()
 #
 def test_python_parse (outFile):
+  own = sys.argv[ 0 ]
+  tred = PyParse()
+  isOk = tred.file_reader( own )
+  assert isOk
+  if True:
+    idx = 0
+    for line in tred.lines:
+      idx += 1
+      print(str(idx)+"\t"+line)
+  isOk = tred.is_text_ok()
+  assert isOk
   return 0
 
 
@@ -35,12 +49,19 @@ def test_python_parse (outFile):
 #
 def python_parse (outFile, args):
   code = 0
+  didAny = False
   if len( args )<=0:
     return dump_usage()
   cmd = args[ 0 ]
   del args[ 0 ]
+  if cmd=="test":
+    didAny = True
+    code = test_python_parse( outFile )
   if cmd=="dump":
+    didAny = True
     code = do_dump( outFile, args )
+  if didAny==False:
+    return dump_usage()
   return code
 
 
@@ -55,12 +76,17 @@ def do_dump (outFile, inArgs):
   outName = None
   args = inArgs
   anyOpt = True
+  forceUnix = False
   while anyOpt and len( args )>0:
     anyOpt = False
     if args[ 0 ]=='-v':
       anyOpt = True
       del args[ 0 ]
       verbose += 1
+    if args[ 0 ]=='-u' or args[ 0 ]=='--force-unix':
+      anyOpt = True
+      del args[ 0 ]
+      forceUnix = True
     if args[ 0 ]=='-o':
       anyOpt = True
       outName = args[ 1 ]
@@ -71,7 +97,8 @@ def do_dump (outFile, inArgs):
     pparse = PyParse()
     isOk = pparse.file_reader( aName )
     if isOk:
-      isTextOk = pparse.is_text_ok()
+      likeUnix = forceUnix==False or (forceUnix==True and pparse.numCR==0)
+      isTextOk = pparse.is_text_ok() and likeUnix
       invalidTabs = 0 if pparse.file_coname()!="PYTHON" else pparse.histogram.how_many( '\t' )
       semiEmptyLines = pparse.histogram.semiEmpty
       if isTextOk:
@@ -90,6 +117,9 @@ def do_dump (outFile, inArgs):
           output.close()
       else:
         code = 8
+        if likeUnix==False:
+          code = 4
+          sys.stderr.write("Skipping non-Unix file: " + aName + "\n")
         if isVerbose:
           print("#Read:", aName, "size:", pparse.byteSize, "; lines:", pparse.numLines, "numCR:", pparse.numCR, "clutter#", len(pparse.clutterChrs), pparse.clutterChrs)
           print("#Non-ASCII7:", pparse.nonASCII7)
