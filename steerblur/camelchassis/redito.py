@@ -14,7 +14,7 @@ class BasicHistogram:
   def __init__ (self, vMin=0, vMax=256):
     self.seen = []
     self.semiEmpty = []
-    for x in range(vMin, vMax):
+    for x in range(vMin, vMax+1):
       self.seen.append( 0 )
     pass
 
@@ -30,10 +30,35 @@ class BasicHistogram:
 
 
 #
+# CLASS BinStream (abstract)
+#
+class BinStream:
+  def init_bin_stream (self):
+    self.bomMarker = (0x0, 0x0)
+
+
+  def isLittleEndian (self):
+    return self.bomMarker == (0xFF, 0xFE)
+
+
+  def set_from_octets (self, bom0, bom1):
+    if type( bom0 )==str:
+      return self.set_from_octets( ord(bom0), ord(bom1) )
+    assert type( bom0 )==int
+    assert type( bom1 )==int
+    hasBOM = False
+    if bom0==0xFF and bom1==0xFE:
+      self.bomMarker = (0xFF, 0xFE)
+      hasBOM = True
+    return hasBOM
+
+
+#
 # CLASS TextRed (abstract)
 #
-class TextRed:
+class TextRed(BinStream):
   def __init__ (self):
+    self.init_bin_stream()
     self.numLines = 0
     self.numCR = 0  # usually we want to avoid '\r'
     self.byteSize = 0
@@ -77,14 +102,39 @@ class TextRed:
     if isOk:
       self.buf = f.read()
       f.close()
-      self.add_content( self.buf )
+      if type( self.buf )==bytes:
+        mayHaveBOM = len( self.buf )>=2
+        hasBOM = self.set_from_octets( self.buf[ 0 ], self.buf[ 1 ] )
+      if hasBOM:
+        self.add_content( self.buf[ 2: ], 2 )
+      else:
+        self.add_content( self.buf, 1 )
     return isOk
 
 
-  def add_content (self, data):
+  def add_content (self, data, ucs=1):
     self.byteSize += len( data )
     s = ""
     col = 0
+    if ucs==2:
+      isOk = False
+      isLittle = self.isLittleEndian()
+      coil = []
+      idx = 0
+      lineNr = -1
+      if isLittle:
+        for p in data:
+          even = (idx % 2)==0
+          if even:
+            assert type(p)==int
+            coil.append( p )
+          else:
+            if p>0:
+              self.histogram.seen[ 256 ] += 1
+              self.nonASCII7.append( (lineNr, idx, format(p, "#02x")) )
+          idx += 1
+        isOk = self.add_content( coil, 1 )
+      return isOk
     for el in data:
       if type( el )==str:
         # Python 2.x
@@ -125,7 +175,8 @@ class TextRed:
 
 
   def is_text_ok (self, requireASCII7=True):
-    isOk = self.numCR==0 and len( self.clutterChrs )==0
+    dosLike = self.numLines==self.numCR
+    isOk = (dosLike or self.numCR==0) and len( self.clutterChrs )==0
     if requireASCII7 and len( self.nonASCII7 )>0:
       isOk = False
     return isOk
