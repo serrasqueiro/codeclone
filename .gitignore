@@ -15,3 +15,7 @@ int_path/git_My_quick_setup.docx
 *.o
 *.obj
 
+# python caches
+*.pyc
+__pycache__
+
