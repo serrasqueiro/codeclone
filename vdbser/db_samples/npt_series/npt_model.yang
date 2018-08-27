@@ -5,6 +5,8 @@ module npt_model {
 
   // --- LINKAGE (IMPORTS / INCLUDES) ----------------------------------
 
+  import v-common { prefix v-common; }
+
   // --- META-INFORMATION ----------------------------------------------
   organization
     "codeclone";
@@ -113,12 +115,64 @@ module npt_model {
       description
         "Description of each one of the tables.
         ";
+
       container npt_list {
         description
           "The 'npt_list' table.";
         uses vdb-header;
         uses optional-date;
         uses optional-key-spec;
+        list nifIds {
+          key nif;
+          description
+            "Content: the list of db tuples.";
+          leaf nif {
+            type v-common:nif-number;
+            description
+              "vat register number; fiscal number.";
+          }
+          leaf merchant {
+            type v-common:strict-merchant;
+            description
+              "Merchant name.";
+          }
+          leaf optionalHint {
+            type string {
+              length 0..60;
+            }
+            description
+              "No semi-colon; follows using '#', an optional indication, e.g. 
+               a site URL.";
+          }
+        }
+      }
+
+      container npt_alias {
+        description
+          "The 'npt_alias' table.";
+        uses vdb-header;
+        uses optional-date;
+        uses optional-key-spec;
+        list hints {
+          key knownName;
+          description
+            "Content: the list of db tuples.
+             For each NIF, there may be, optionally, a known name.
+            ";
+          leaf knownName {
+            type string {
+              length 2..20;
+              pattern '[A-Za-z][A-Za-z0-9.]*';
+            }
+            description
+              "Known name for merchant.";
+          }
+          leaf nif {
+            type v-common:nif-number;
+            description
+              "vat register number; fiscal number.";
+          }
+        }
       }
     }
   }
@@ -184,6 +238,7 @@ module npt_model {
       "Usually the second line, optional, as
           '# date:YYYYmmdd'
       ";
+    uses v-common:day-date;
   }
 
   grouping optional-key-spec {

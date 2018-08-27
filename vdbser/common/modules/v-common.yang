@@ -1,0 +1,75 @@
+module v-common {
+  // --- NAMESPACE / PREFIX DEFINITION ---------------------------------
+  namespace "urn:codeclone:vdbser:dbs:v-common";
+  prefix "v-common";
+
+  // --- LINKAGE (IMPORTS / INCLUDES) ----------------------------------
+
+  // --- META-INFORMATION ----------------------------------------------
+  organization
+    "codeclone";
+  contact
+    "Henrique Moreira
+     h@serrasqueiro.com
+     =======================================
+     github: https://github.com/serrasqueiro/codeclone.git
+     =======================================
+    ";
+  description
+    "This module contains the common definitions used for 'vdbser'.
+    ";
+  revision 2018-08-27 {
+    description "First draft.";
+    reference "https://github.com/serrasqueiro/codeclone/tree/master/";
+  }
+
+  // --- TYPE DEFINITIONS ----------------------------------------------
+
+  typedef strict-day-date {
+    type string {
+      length 8;
+      //pattern '2[0-5][0-9]{2}[0-1][0-9][0-3][0-9]';
+      pattern '2[0-5][0-9]{2}[0-1][0-9](01|02|03|04|05|06|07|08|09|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31)';
+    }
+    description
+      "Strict day date, in YYYYmmdd format: year, month, day of month.";
+  }
+
+  typedef nif-number {
+    type string {
+      length 9;
+      pattern '(1|2|5|6|8|9)[0-9]{8}';
+    }
+    description
+      "Portugal NIF;
+       - 1st digit:
+            1 or 2: individual;
+            5: pessoa colectiva;
+            6: pessoa colectiva, public
+            8: empresario em nome individual
+            9: pessoa colectiva irregular (or temporary).
+       - last digit is the check-digit
+      ";
+    //default '100100201' -- '1' here is the correct check-digit.
+  }
+
+  typedef strict-merchant {
+    type string {
+      length 1..48;
+      pattern '[A-Za-z0-9., -]*';
+    }
+  }
+
+  // --- MODULE DEFINITIONS---------------------------------------------
+
+  grouping day-date {
+    description
+      "A strict day date, as a string, in YYYYmmdd format (8 octets).";
+    leaf dayDate {
+      type strict-day-date;
+      default '20020131';
+      description
+        "Calendar day date (without time).";
+    }
+  }
+}
