@@ -1,0 +1,6 @@
+
+npt_series/
+	npt_list.vdb has a public list of NIPC (NIF for companies, Portugal).
+	npt_alias.vdb has a personalized abbreviation for the npt_list.
+	npt_model.yang is the Yang model of all the above.
+

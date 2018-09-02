@@ -197,6 +197,16 @@ class TextRed(BinStream):
   pass
 
 
+#
+# CLASS BareText
+#
+class BareText(TextRed):
+  def top_init (self):
+    self.userDefined = []
+
+
+  pass
+
 
 #
 # CLASS WildStr
