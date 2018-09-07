@@ -23,6 +23,10 @@ def test_datex (outFile, inArgs):
     for y in [2018, 2016]:
       isOk = dt.set_year( y )
       print("Trying year", y, "for", dt, "Ok?", isOk, "dateOk?", dt.dateOk)
+  if True:
+    euroDate = EuDate( args[ 0 ] )
+    ed = euroDate
+    print(ed, "ed.dateOk?", ed.dateOk)
   return code
 
 
@@ -152,6 +156,71 @@ class ShortDate(AnyDate):
       return False
     self.year = aYear
     return True
+
+
+  pass
+
+
+#
+# CLASS EuDate
+class EuDate(AnyDate):
+  def date_init (self, s):
+    self.leadYear = -1
+    if type( s )==list:
+      aStr = self.mainSeparator.join( s )
+      if len( s )>0 and len( aStr )>0:
+        return self.date_init( aStr )
+      return -1
+    self.dateOk = self.try_date( s )
+    return 0
+
+
+  def try_date (self, s):
+    assert type( s )==str
+    for tryLen in [3]:
+      for sep in self.separators:
+        spl = s.split( sep )
+        if len( spl )!=tryLen:
+          continue
+        isEnglish = dateStyle.is_english_style()
+        yStr = spl[ 2 ]
+        if isEnglish:
+          m = spl[ 0 ]
+          d = spl[ 1 ]
+        else:
+          # Check whether it is YYYY-mm-dd or dd-mm-YYYY
+          d = spl[ 0 ]
+          m = spl[ 1 ]
+          if len( d )==4:
+            self.leadYear = 1
+            yStr = d
+            d = spl[ 2 ]
+          elif len( yStr )==4:
+            self.leadYear = 3
+            pass
+        tup = self.basic_dm_check( d, m, yStr )
+        isOk = tup[ 0 ]
+        if isOk:
+          y = int( yStr )
+          self.year = y
+        if isOk:
+          self.day = tup[ 1 ]
+          self.month = tup[ 2 ]
+          print("Ok, yStr:", yStr, "day:", self.day, "month:", self.month, "year:", self.year)
+          return True
+    return False
+
+
+  def __str__ (self):
+    assert self.year>=1900
+    dayStr = format( self.day, "02d" )
+    monthStr = format( self.month, "02d" )
+    if self.year<=1900:
+      s = "--/--/----"
+      return s
+    yearStr = format( self.year, "04d" )
+    s = dayStr + self.mainSeparator + monthStr + self.mainSeparator + yearStr
+    return s
 
 
   pass
