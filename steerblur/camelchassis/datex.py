@@ -6,6 +6,7 @@
   Compatibility: python 2 and 3.
 """
 
+""" obsolete by adate.py
 
 #
 # test_datex()
@@ -231,13 +232,16 @@ class EuDate(AnyDate):
 #
 dateStyle = DateStylex()
 
+"""
+
 
 #
 # Test suite
 #
 if __name__ == "__main__":
-  import sys
-  args = sys.argv[ 1: ]
-  code = test_datex( sys.stdout, args )
+  print("Obsolete module.")
+  #import sys
+  #args = sys.argv[ 1: ]
+  #code = test_datex( sys.stdout, args )
   pass
 

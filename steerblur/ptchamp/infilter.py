@@ -8,7 +8,7 @@
 
 
 from redito import BareText
-from datex import ShortDate
+from adate import ShortDate
 
 
 #
