@@ -1,0 +1,23 @@
+
+
+camelchassis/
++++
+Intends to use textual part of python files, along with a few basic utilities 
+(such as 'datex.py' -- which is not used anywhere else for now.)
+
+Package details
+ooo
+
+redito.py:
+	handles UCS and text-only files.
+BareText() is the most prominent class.
+
+
+python_parse.py:
+	The original text-file reader (from python files);
+textlike.py then evolved
+
+
+ptchamp/
++++
+An unfinished package to parse 'season_pt_2018.zip', portuguese football.
