@@ -6,7 +6,7 @@
   Compatibility: python 2 and 3.
 """
 
-
+import sys
 from redito import BareText
 
 
@@ -22,7 +22,7 @@ Command is one of:
 \t\t-o    Output to (use @@ for: similar as input)
 \t\t-u    Force input to be Unix (no CRs)
 """)
-  return 0
+  sys.exit( 0 )
 
 
 #
@@ -62,7 +62,7 @@ def textlike (outFile, inArgs):
   didAny = False
   args = inArgs
   if len( args )<=0:
-    return dump_usage()
+    dump_usage()
   cmd = args[ 0 ]
   del args[ 0 ]
   if cmd=="test":
@@ -72,7 +72,7 @@ def textlike (outFile, inArgs):
     didAny = True
     code = do_dump( outFile, args )
   if didAny==False:
-    return dump_usage()
+    dump_usage()
   return code
 
 
@@ -91,10 +91,10 @@ def do_dump (outFile, inArgs):
   forceUnix = False
   while anyOpt and len( args )>0:
     anyOpt = False
-    if args[ 0 ]=='-v':
+    if args[ 0 ].find( '-v' )==0:
       anyOpt = True
+      verbose += args[ 0 ].count( 'v' )
       del args[ 0 ]
-      verbose += 1
       continue
     if args[ 0 ]=='-u' or args[ 0 ]=='--force-unix':
       anyOpt = True
@@ -106,6 +106,8 @@ def do_dump (outFile, inArgs):
       outName = args[ 1 ]
       del args[ :2 ]
       continue
+    if args[ 0 ][ 0 ]=='-':
+      dump_usage()
   isVerbose = verbose>0
   # Process args (inputs):
   for aName in args:

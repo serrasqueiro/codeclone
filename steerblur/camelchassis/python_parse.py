@@ -6,7 +6,7 @@
   Compatibility: python 2 and 3.
 """
 
-
+import sys
 from redito import TextRed, WildStr
 
 
@@ -22,7 +22,7 @@ Command is one of:
 \t\t-o    Output to (use @@ for: similar as input)
 \t\t-u    Force input to be Unix (no CRs)
 """)
-  return 0
+  sys.exit( 0 )
 
 
 #
@@ -51,7 +51,7 @@ def python_parse (outFile, args):
   code = 0
   didAny = False
   if len( args )<=0:
-    return dump_usage()
+    dump_usage()
   cmd = args[ 0 ]
   del args[ 0 ]
   if cmd=="test":
@@ -61,7 +61,7 @@ def python_parse (outFile, args):
     didAny = True
     code = do_dump( outFile, args )
   if didAny==False:
-    return dump_usage()
+    dump_usage()
   return code
 
 
@@ -94,6 +94,8 @@ def do_dump (outFile, inArgs):
       outName = args[ 1 ]
       del args[ :2 ]
       continue
+    if args[ 0 ][ 0 ]=='-':
+      dump_usage()
   isVerbose = verbose>0
   # Process args (inputs):
   for aName in args:
