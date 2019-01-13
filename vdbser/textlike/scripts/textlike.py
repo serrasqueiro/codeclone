@@ -33,9 +33,17 @@ def test_textlike (outFile, args):
   dumpClass = True
   own = sys.argv[ 0 ]
   if len( args )>0:
-    own = args[ 0 ]
-  tred = BareText()
-  isOk = tred.file_reader( own )
+    inName = args[ 0 ]
+    param = args[ 1: ]
+  else:
+    inName = own
+    param = []
+  tred = BareText( inName )
+  if tred.extension_matches( "PS" ):
+    code = test_treat_pdf( tred, param )
+    isOk = True
+  else:
+    isOk = tred.file_reader( inName )
   assert isOk
   if True:
     idx = 0
@@ -52,6 +60,24 @@ def test_textlike (outFile, args):
     print("skipNonASCII7bit?", tred.skipNonASCII7bit)
   sys.stderr.write("Code: " + str(code) + "\n")
   return code
+
+
+#
+# test_treat_pdf()
+#
+def test_treat_pdf (tred, param):
+  import PyPDF2
+  pdfName = tred.get_filename()
+  print("Debug test_treat_pdf:", pdfName, "; param:", param)
+
+  read_pdf = PyPDF2.PdfFileReader(pdfName)
+  for i in range(read_pdf.getNumPages()):
+    page = read_pdf.getPage(i)
+    print('Page No - ', 1 + read_pdf.getPageNumber(page))
+    page_content = page.extractText()
+    print()
+    print( page_content )
+  return 0
 
 
 #
@@ -74,7 +100,6 @@ def textlike (outFile, inArgs):
   if didAny==False:
     dump_usage()
   return code
-
 
 
 #
@@ -133,7 +158,5 @@ def do_dump (outFile, inArgs):
 if __name__ == "__main__":
   import sys
   code = textlike( sys.stdout, sys.argv[ 1: ] )
-  if type( code )==int and code>0:
-    sys.exit( code )
-  pass
+  sys.exit( code )
 

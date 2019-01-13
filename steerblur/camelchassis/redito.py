@@ -64,7 +64,7 @@ class BinStream:
 # CLASS TextRed (abstract)
 #
 class TextRed(BinStream):
-  def __init__ (self):
+  def __init__ (self, filename=""):
     self.init_bin_stream()
     self.numLines = 0
     self.numCR = 0  # usually we want to avoid '\r'
@@ -73,23 +73,34 @@ class TextRed(BinStream):
     self.clutterChrs = []
     self.nonASCII7 = []
     self.skipNonASCII7bit = True
+    self.nonASCII7Str = "."
     self.lines = []
-    self.inFilename = ""
     self.extension = ( "", [""] )
+    self.set_filename( filename )
     self.histogram = BasicHistogram()
     self.top_init()
 
 
+  def get_filename (self):
+    return self.inFilename;
+
+
   def set_filename (self, filename):
-    self.inFilename = filename
+    if filename:
+      self.inFilename = filename
+    else:
+      self.inFilename = ""
     pos = filename.rfind( "." )
     coName = ""
     if pos>0:
       ext = filename[ pos: ]
     else:
       ext = ""
+    uExt = ext.lower()
     if ext=='.py':
       coName = "PYTHON"
+    elif uExt=='.pdf':
+      coName = "PS"  # postscript
     self.extension = ( ext, [coName] )
     return coName
 
@@ -98,11 +109,21 @@ class TextRed(BinStream):
     return self.extension[ 1 ][ 0 ]
 
 
-  def file_reader (self, filename):
+  def extension_matches (self, aStr):
+    aExt = self.extension[ 1 ]
+    assert len( aExt )==1 and type( aExt )==list
+    assert type( aStr )==str
+    return aExt[ 0 ]==aStr
+
+
+  def file_reader (self, filename=None):
+    if filename:
+      inName = filename
+    else:
+      inName = self.filename
     isOk = True
-    self.set_filename( filename )
     try:
-      f = open( filename, "rb" )
+      f = open( inName, "rb" )
     except:
       isOk = False
     self.buf = ""
@@ -169,6 +190,8 @@ class TextRed(BinStream):
           self.nonASCII7.append( (self.numLines+1, col, format(c, "#02x")) )
         if c<127 or self.skipNonASCII7bit==False:
           s += chr( c )
+        else:
+          s += self.nonASCII7Str
     if len( s )>0:
       self.noEOL = True
       self.add_lines( s+"\n" )
