@@ -45,6 +45,8 @@ def test_xcelar3 (outFile, args):
         del param[ 0 ]
         continue
       if param[ 0 ]=="-b":
+        any = True
+        del param[ 0 ]
         showBin = True
     showWarn = verbose>0
     if out==sys.stdout and showBin:
@@ -52,17 +54,35 @@ def test_xcelar3 (outFile, args):
       out = sys.stdout
     for filename in param:
       rows = xcel_xlx_read( filename )
+      rf = RexFilter( rows )
+      rf.to_lines()
+      if rf.stats[ 1 ]>=1 and rf.y>=2:
+        sec = basic_ascii( rf.lines[ 1 ] )
+        isUniverso = sec.find( "'Data','Movimento'" )==0
+        if verbose>=2:
+          print("rf #1", basic_ascii( rf.lines[ 0 ] ))
+          print("rf #2", sec, "sec type:", type(sec), "len:", len(sec))
+        if isUniverso:
+          del rows[ :2 ]
       aSep = " " if verbose<=0 else " ; " if verbose>=2 else ";"
       idx = 0
       hasDate = False
       for r in rows:
         idx += 1
         linear = None
+        if 'C' in r:
+          columnC = r['C']
+        else:
+          columnC = "(C)"
+        if 'D' in r:
+          columnD = basic_ascii( r['D'] )
+        else:
+          columnD = "?"
         if 'E' in r:
           try:
-            m1 = r['D']
+            m1 = columnD
             m2 = r['E']
-            linear = r['A'] + aSep + r['B'] + aSep + r['C'] + aSep + m1 + aSep + m2
+            linear = r['A'] + aSep + r['B'] + aSep + columnC + aSep + m1 + aSep + m2
           except:
             s = "(unknown)"
         else:
@@ -75,7 +95,10 @@ def test_xcelar3 (outFile, args):
           if hasDate and tupDate[ 0 ]!=0:
             aDate = tupDate[ 1 ]
           else:
-            aDate = "#"+exDateStr
+            if isUniverso:
+              aDate = exDateStr
+            else:
+              aDate = "#"+exDateStr
           fmtDate = '{:>10}'.format( aDate )
           v1 = deval( m1 )
           v2 = deval( m2 )
@@ -90,14 +113,52 @@ def test_xcelar3 (outFile, args):
           if isHeader:
             desc = "Descricao"
           else:
-            desc = simpler_desc( r['C'] )
-          s = fmtDate + aSep + val1Str + aSep + val2Str + aSep + desc
+            if isUniverso:
+              desc = basic_ascii( r['B'] ).strip()
+            else:
+              desc = simpler_desc( columnC )
+          if isUniverso:
+            s = fmtDate + aSep + val2Str + aSep + desc
+          else:
+            s = fmtDate + aSep + val1Str + aSep + val2Str + aSep + desc
           out.write( s )
           out.write( "\n" )
         else:
           lineStr = "Line " + str( idx )+": "
           if showWarn:
             sys.stderr.write( lineStr + s + "\n")
+  if cmdStr=="raw":
+    validCmd = True
+    idx = 0
+    for d in ([{'A':"col_one", 'B':"col_two", 'C':"three"}, {'B':"single"}],
+              [{'C':"apple"}, {'AC':"cell"}]):
+      idx += 1
+      rf = RexFilter( d )
+      rf.to_lines()
+      print("\nTest", idx, "starts here:")
+      print("Stats:", rf.stats)
+      if rf.stats[ 3 ]>26:
+        y = 0
+        for row in rf.lines:
+          y += 1
+          x = 0
+          for entry in row:
+            x += 1
+            cellName = rf.cell_name( y, x )
+            if entry!="":
+              print(cellName + ":", entry)
+            assert type( entry )==str
+      else:
+        for row in rf.lines:
+          print( row )
+      print("<<<")
+    for tup in [(26, "Z"), (27, "AA"), (28, "AB"), (29, "AC"), (30, "AD"),
+                (221, "HM"), (286, "JZ"), (287, "KA"), (834, "AFB")]:
+      x = tup[ 0 ]
+      letras = rf.col_to_letter( x )
+      isOk = letras==tup[ 1 ]
+      print("Xcel columns:", x, letras, "OK" if isOk else "NotOk")
+      assert isOk
   if validCmd==False:
     print("""Commands are:
 
@@ -116,6 +177,45 @@ def rewrite (encoding=""):
   sys.stdout = codecs.getwriter( enc )(sys.stdout)
   out = sys.stdout
   return out
+
+
+#
+# basic_ascii()
+#
+def basic_ascii (s, sep=",", quotes="'"):
+  res = ""
+  if type( s )==list or type( s )==tuple:
+    quotesLeft = quotes
+    quotesRight = quotes
+    for elem in s:
+      if res!="":
+        res += sep
+      one = basic_ascii( quotesLeft + elem + quotesRight )
+      res += one
+  elif type( s )==int:
+    res = str( s )
+  else:
+    for c in s:
+      tic = "."
+      if c>=' ' and c<='~':
+        tic = c
+      res += tic
+  return res
+
+
+
+#
+# list_ascii()
+#
+def list_ascii (aList):
+  res = []
+  if type( aList )==list or type( aList )==tuple:
+    for elem in aList:
+      res.append( basic_ascii( elem ) )
+  elif type( aList )==dict:
+    for key, val in aList.items():
+      res.append( [key, basic_ascii( val )] )
+  return res
 
 
 #
@@ -195,6 +295,114 @@ def simpler_desc (s):
     any = keep!=res
   return res
 
+
+#
+# RexFilter
+#
+class RexFilter:
+  def __init__ (self, rows=[]):
+    self.table = rows
+    self.lines = []
+    self.init_stats()
+
+
+  def init_stats (self, minCol=0, maxCol=0, minY=-1, maxY=0, emptyLine=0, nonDict=0):
+    self.stats = ("min.col", minCol,
+                  "max.col", maxCol,
+                  "min.y", minY,
+                  "max.y", maxY,
+                  "empty.line", emptyLine,
+                  "non.dict", nonDict,
+                  "-", -1)
+    self.y = maxY
+    return True
+
+
+  def letter_to_col_idx (self, c):
+    if c=="":
+      return 0
+    one = c[ 0 ]
+    if one<'A' or one>'Z':
+      return 0
+    v = 0
+    for a in c:
+      v *= 26
+      if a<'A' or a>'Z':
+        return -999
+      v += ord(a)-ord('A')+1
+    return v
+
+
+  def col_to_letter (self, num):
+    assert type( num )==int
+    assert num>0
+    res = ""
+    val = num
+    if val<=26:
+      return chr( ord('A') + val - 1 )
+    while val>0:
+      val -= 1
+      v = val % 26
+      letra = chr( ord('A') + v )
+      res = letra + res
+      val = val // 26
+    return res
+
+
+  def cell_name (self, y, x, fixY="", fixX=""):
+    assert type(y)==int
+    assert type(x)==int
+    if y>0 and x>0:
+      return fixX + self.col_to_letter( x ) + fixY + str( y )
+    assert False
+    return ""
+
+
+  def to_lines (self, idx=0):
+    res = []
+    minCol = 0
+    maxCol = -1
+    nonDict = 0
+    nEmptyLines = 0
+    y = 0
+    isOk = True
+    for r in self.table:
+      y += 1
+      n = len( r )
+      isDict = type( r )==dict
+      nEmptyLines += int( len( r )==0 )
+      if isDict:
+        colLo = -1
+        colHi = -1
+        for letra, val in r.items():
+          col = self.letter_to_col_idx( letra )
+          if col<colLo or colLo==-1:
+            colLo = col
+          if col>colHi:
+            colHi = col
+        col = colLo
+        num = colHi
+        if num<minCol or minCol==0:
+          minCol = num
+        if num>maxCol:
+          maxCol = num
+      else:
+        nonDict += 1
+        isOk = False
+    for r in self.table:
+      if type( r )==dict:
+        i = idx
+        row = []
+        while i<maxCol:
+          i += 1
+          letra = self.col_to_letter( i )
+          field = ""
+          if letra in r:
+            field = r[ letra ]
+          row.append( field )
+        self.lines.append( row )
+    self.init_stats( minCol, maxCol, 0, y, nEmptyLines, nonDict )
+    return isOk
 
 #
 # Test suite
