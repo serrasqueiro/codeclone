@@ -48,6 +48,7 @@ def test_xcelar3 (outFile, args):
         any = True
         del param[ 0 ]
         showBin = True
+        continue
     showWarn = verbose>0
     if out==sys.stdout and showBin:
       sys.stdout = rewrite( "" )
@@ -57,13 +58,31 @@ def test_xcelar3 (outFile, args):
       rf = RexFilter( rows )
       rf.to_lines()
       if rf.stats[ 1 ]>=1 and rf.y>=2:
+        first = basic_ascii( rf.lines[ 0 ] )
         sec = basic_ascii( rf.lines[ 1 ] )
         isUniverso = sec.find( "'Data','Movimento'" )==0
+        isABCred = first.find( " a Cr.dito ")>0
         if verbose>=2:
-          print("rf #1", basic_ascii( rf.lines[ 0 ] ))
+          print("rf #1", first)
           print("rf #2", sec, "sec type:", type(sec), "len:", len(sec))
         if isUniverso:
           del rows[ :2 ]
+        if isABCred:
+          del rows[ :2 ]
+          conta = rows[ 0 ]
+          del rows[ 0 ]
+          maxNum = 9
+          idx = 0
+          for r in rows:
+            idx += 1
+            maxNum -= 1
+            if maxNum<0:
+              break
+            tenseAscii = str( list_ascii( r ) )
+            if tenseAscii.find( "Data Lanc.")>=0:
+              break
+          if maxNum>0:
+            del rows[ :idx ]
       aSep = " " if verbose<=0 else " ; " if verbose>=2 else ";"
       idx = 0
       hasDate = False
@@ -78,6 +97,8 @@ def test_xcelar3 (outFile, args):
           columnD = basic_ascii( r['D'] )
         else:
           columnD = "?"
+        if isABCred:
+          r['E'] = r['A']
         if 'E' in r:
           try:
             m1 = columnD
@@ -92,7 +113,7 @@ def test_xcelar3 (outFile, args):
           isHeader = exDateStr.find( "Data" )==0
           tupDate = from_xcel_date( exDateStr )
           #print("isHeader:", isHeader, "; hasDate:", hasDate, "tupDate:", tupDate)
-          if hasDate and tupDate[ 0 ]!=0:
+          if (hasDate or isABCred) and tupDate[ 0 ]!=0:
             aDate = tupDate[ 1 ]
           else:
             if isUniverso:
@@ -119,6 +140,8 @@ def test_xcelar3 (outFile, args):
               desc = simpler_desc( columnC )
           if isUniverso:
             s = fmtDate + aSep + val2Str + aSep + desc
+          elif isABCred:
+            s = fmtDate + aSep + val1Str + aSep + desc.strip()
           else:
             s = fmtDate + aSep + val1Str + aSep + val2Str + aSep + desc
           out.write( s )
