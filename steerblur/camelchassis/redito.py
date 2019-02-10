@@ -306,7 +306,8 @@ class TextRed(BinStream):
         c = ord( el )
       else:
         c = el
-      self.histogram.seen[ c ] += 1
+      if c < len( self.histogram.seen ):
+        self.histogram.seen[ c ] += 1
       if c==ord('\n'):
         self.add_lines( s )
         s = ""
@@ -323,7 +324,7 @@ class TextRed(BinStream):
         if c<127 or self.skipNonASCII7bit==False:
           s += chr( c )
         else:
-          if self.convertToLatin1:
+          if self.convertToLatin1 and c<256:
             s += xCharMap.simpler_ascii( chr(c) )
           else:
             s += self.nonASCII7Str

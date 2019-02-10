@@ -19,6 +19,7 @@ def dump_usage ():
 Command is one of:
   dump      Dump input file(s), 7bit-ASCII
   iso-dump  Dump input file(s), near_text() 7bit-ASCII
+  utf-dump  Similar to iso-dump, but input is UTF-8
 \t\t-v    Verbose (or -v -v ...)
 \t\t-o    Output to (use @@ for: similar as input)
 \t\t-u    Force input to be Unix (no CRs)
@@ -112,7 +113,12 @@ def textlike (outFile, inArgs):
     code = do_dump( outFile, args )
   if cmd=="iso-dump":
     didAny = True
+    # TODO!
+    assert False
     code = do_dump( outFile, args, "latin1" )
+  if cmd=="utf-dump":
+    didAny = True
+    code = do_dump( outFile, args, "utf-8" )
   if didAny==False:
     dump_usage()
   return code
@@ -152,7 +158,10 @@ def do_dump (outFile, inArgs, dumpType="dump"):
   # Process args (inputs):
   for aName in args:
     tred = BareText()
-    readOk = tred.file_reader( aName )
+    if dumpType=="utf-8":
+      readOk = tred.utf_file_reader( aName )
+    else:
+      readOk = tred.file_reader( aName )
     if not readOk:
       sys.stderr.write("Uops: " + aName + "\n")
       return 2
