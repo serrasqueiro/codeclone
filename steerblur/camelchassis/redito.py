@@ -45,6 +45,20 @@ class CharMap:
   def init_charmap (self):
     self.subst = ['.'] * 256
     self.altSubst = ['.'] * 256
+    # Hint: for Unicode Character Map, e.g. UCS2 value 0x201c,
+    #       see https://unicodemap.org/details/0x201c/index.html
+    self.otherLookup = [
+      (0xae,   "(R)", "&reg;", "Registered trademark", 0),
+      (0xab,   "<<", "&laquo;", "Angle quotation mark (left)", 1),
+      (0xbb,   ">>", "&raquo;", "Angle quotation mark (right)", 1),
+      (0xa0,   " ", "&nbsp;", "Non-breaking space", 2),
+      (0xb7,   "-", "&middot;", "Middle dot", 2),
+      (0x2013, "--", "&ndash;", "EN dash", 2),
+      (0x2014, "--", "&mdash;", "EM dash", 2),
+      (0x201c, '"', "&ldquo;", "Left double quotation mark", 2),  # kind of inverted open double-quotes
+      (0x201d, '"', "&rdquo;", "Right double quotation mark", 2),  # kind of inverted open double-quotes
+      (0x0, "", "", "", -1)
+      ]
     conv = ((0xc1, 'A', "A'"),  # A-acute
             (0xc9, 'E', "E'"),  # E-acute
             (0xcd, 'I', "I'"),  # I-acute
@@ -74,6 +88,19 @@ class CharMap:
       assert asciiValue>=32
       for ch in conv[ idx+1: ]:
         assert asciiValue!=ch[0]
+      idx += 1
+    idx = 0
+    for tup in self.otherLookup:
+      assert len( tup )==5
+      assert type( tup[ 0 ] )==int
+      assert type( tup[ 1 ] )==str
+      assert type( tup[ 2 ] )==str
+      assert type( tup[ 3 ] )==str
+      asciiValue = tup[ 0 ]
+      if asciiValue==0:
+        break
+      for ch in self.otherLookup[ idx+1: ]:
+        assert asciiValue!=ch[ 0 ]
       idx += 1
     # Start indexing:
     idx = 32
@@ -117,6 +144,15 @@ class CharMap:
         s += chars
       return s
     assert False
+
+
+  def find_other_lookup (self, asciiNum):
+    assert type( asciiNum )==int
+    for tup in self.otherLookup:
+      a = tup[ 0 ]
+      if a==asciiNum:
+        return tup
+    return None
 
 
   pass
@@ -306,6 +342,7 @@ class TextRed(BinStream):
         c = ord( el )
       else:
         c = el
+      nonISO_tup = None
       if c < len( self.histogram.seen ):
         self.histogram.seen[ c ] += 1
       if c==ord('\n'):
@@ -319,15 +356,28 @@ class TextRed(BinStream):
         s += "?"
       else:
         col += 1
-        if c>=127:
-          self.nonASCII7.append( (self.numLines+1, col, format(c, "#02x")) )
         if c<127 or self.skipNonASCII7bit==False:
           s += chr( c )
         else:
           if self.convertToLatin1 and c<256:
-            s += xCharMap.simpler_ascii( chr(c) )
+            conv = xCharMap.simpler_ascii( chr(c) )
+            if c>=127 and conv=='.':
+              other = xCharMap.find_other_lookup( c )
+              if other:
+                conv = other[ 1 ]
+              else:
+                nonISO_tup = (self.numLines+1, col, format(c, "#02x")+" .")
+            s += conv
           else:
-            s += self.nonASCII7Str
+            other = xCharMap.find_other_lookup( c )
+            if other:
+              chup = other[ 1 ]
+            else:
+              chup = self.nonASCII7Str
+              nonISO_tup = (self.numLines+1, col, format(c, "#02x"))
+            s += chup
+      if nonISO_tup:
+        self.nonASCII7.append( nonISO_tup )
     if len( s )>0:
       self.noEOL = True
       self.add_lines( s+"\n" )
