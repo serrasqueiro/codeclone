@@ -3,8 +3,35 @@
 """
   redito - Common functions to streams and files.
 
-  Compatibility: python 2 and 3.
+  Compatibility: python 3.
 """
+
+
+
+#
+# test_redito()
+def test_redito (out, inArgs):
+  err = sys.stderr
+  dosCR = ""
+  args = inArgs
+  doAny = True
+  while doAny and len( args )>0:
+    doAny = False
+    if args[ 0 ]=='--dos':
+      doAny = True
+      del args[ 0 ]
+      dosCR = "\r"
+      continue
+  if len( args )<0:
+    return 0
+  name = args[ 0 ]
+  tred = BareText( name )
+  isOk = tred.utf_file_reader()
+  if isOk:
+    for aLine in tred.lines:
+      s = aLine
+      out.write( s + dosCR + "\n" )
+  return 0
 
 
 #
@@ -161,11 +188,13 @@ class TextRed(BinStream):
     self.clutterChrs = []
     self.nonASCII7 = []
     self.skipNonASCII7bit = True
+    self.convertToLatin1 = False
     self.nonASCII7Str = "."
     self.lines = []
     self.extension = ( "", [""] )
     self.set_filename( filename )
     self.histogram = BasicHistogram()
+    self.inEncoding = "ascii"
     self.top_init()
 
 
@@ -204,11 +233,19 @@ class TextRed(BinStream):
     return aExt[ 0 ]==aStr
 
 
+  def utf_file_reader (self, filename=None):
+    # This requires Python>2
+    self.inEncoding = "utf-8"
+    self.convertToLatin1 = True
+    isOk = self.file_reader( filename )
+    return isOk
+
+
   def file_reader (self, filename=None):
     if filename:
       inName = filename
     else:
-      inName = self.filename
+      inName = self.inFilename
     isOk = True
     try:
       f = open( inName, "rb" )
@@ -216,11 +253,18 @@ class TextRed(BinStream):
       isOk = False
     self.buf = ""
     if isOk:
+      f.close()
+      if self.inEncoding=="ascii":
+        f = open( inName, "rb" )
+      else:
+        f = open( inName, "r", encoding=self.inEncoding )
       self.buf = f.read()
       f.close()
       if type( self.buf )==bytes:
         mayHaveBOM = len( self.buf )>=2
         hasBOM = self.set_from_octets( self.buf[ 0 ], self.buf[ 1 ] )
+      else:
+        hasBOM = False
       if hasBOM:
         self.add_content( self.buf[ 2: ], 2 )
       else:
@@ -279,7 +323,10 @@ class TextRed(BinStream):
         if c<127 or self.skipNonASCII7bit==False:
           s += chr( c )
         else:
-          s += self.nonASCII7Str
+          if self.convertToLatin1:
+            s += xCharMap.simpler_ascii( chr(c) )
+          else:
+            s += self.nonASCII7Str
     if len( s )>0:
       self.noEOL = True
       self.add_lines( s+"\n" )
@@ -405,6 +452,6 @@ xCharMap = CharMap()
 if __name__ == "__main__":
   import sys
   args = sys.argv[ 1: ]
-  print("No tests yet, ignored:", args)
-  pass
+  code = test_redito( sys.stdout, args )
+  sys.exit( code )
 

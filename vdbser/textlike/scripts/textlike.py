@@ -152,7 +152,10 @@ def do_dump (outFile, inArgs, dumpType="dump"):
   # Process args (inputs):
   for aName in args:
     tred = BareText()
-    tred.file_reader( aName )
+    readOk = tred.file_reader( aName )
+    if not readOk:
+      sys.stderr.write("Uops: " + aName + "\n")
+      return 2
     isOk = forceUnix==False or (forceUnix and tred.numCR==0)
     if isOk:
       if outName and not curOut:
