@@ -7,7 +7,7 @@
 """
 
 import sys
-from redito import BareText
+from redito import BareText, xCharMap
 
 
 #
@@ -18,6 +18,7 @@ def dump_usage ():
 
 Command is one of:
   dump      Dump input file(s), 7bit-ASCII
+  iso-dump  Dump input file(s), near_text() 7bit-ASCII
 \t\t-v    Verbose (or -v -v ...)
 \t\t-o    Output to (use @@ for: similar as input)
 \t\t-u    Force input to be Unix (no CRs)
@@ -28,10 +29,22 @@ Command is one of:
 #
 # test_textlike()
 #
-def test_textlike (outFile, args):
+def test_textlike (outFile, inArgs):
   code = 0
+  verbose = 0
   dumpClass = True
+  args = inArgs
+  anyOpt = True
+  while anyOpt and len( args )>0:
+    anyOpt = False
+    if args[ 0 ].find( '-v' )==0:
+      anyOpt = True
+      verbose += args[ 0 ].count( 'v' )
+      del args[ 0 ]
+      continue
   own = sys.argv[ 0 ]
+  if own.endswith( "latin1_test.py" ):
+    return own_latin1_test( args )
   if len( args )>0:
     inName = args[ 0 ]
     param = args[ 1: ]
@@ -97,6 +110,9 @@ def textlike (outFile, inArgs):
   if cmd=="dump":
     didAny = True
     code = do_dump( outFile, args )
+  if cmd=="iso-dump":
+    didAny = True
+    code = do_dump( outFile, args, "latin1" )
   if didAny==False:
     dump_usage()
   return code
@@ -105,7 +121,7 @@ def textlike (outFile, inArgs):
 #
 # do_dump()
 #
-def do_dump (outFile, inArgs):
+def do_dump (outFile, inArgs, dumpType="dump"):
   code = 0
   verbose = 0
   output = outFile
@@ -133,7 +149,6 @@ def do_dump (outFile, inArgs):
       continue
     if args[ 0 ][ 0 ]=='-':
       dump_usage()
-  isVerbose = verbose>0
   # Process args (inputs):
   for aName in args:
     tred = BareText()
@@ -147,13 +162,54 @@ def do_dump (outFile, inArgs):
         outFile.write( aLine + "\n" )
     else:
       sys.stderr.write("Not unix: " + aName + "\n")
+    if verbose>=2:
+      aLen = len( tred.nonASCII7 )
+      if aLen>0:
+        print("Latin1 chars, is_text_ok()?", tred.is_text_ok())
+        for a in tred.nonASCII7:
+          print( "Line", str(a[0])+": column:", a[1], a[2] )
   if curOut:
     outFile.close()
   return code
 
 
 #
-# Test suite
+# own_latin1_test() -- pre-filled tests
+#
+def own_latin1_test (inArgs):
+  args = inArgs
+  print("ARGS:", args)
+  print("")
+  a = """ISO8859-1 (Latin-1) text:
+"c\xE3o vir\xE1 na dire\xE7\xE3o certa, abre a p\xE1gina diz \xD3scar \xE0 \xE9gua!"
+
+\xE1\xE9\xED\xF3\xFA
+\xE0....
+\xC1\xC9\xCD\xD3\xDA
+\xC0....
+\xE3..\xF5.
+\xC3..\xD5.
+
+Cedil:
+\x09\xE7\xC7
+"""
+  aList = a.split( "\n" )
+  for lineStr in aList:
+    s = xCharMap.simpler_ascii( lineStr )
+    t = xCharMap.simpler_ascii( lineStr, 1 )
+    if s=="":
+      continue
+    print("s:", s)
+    print("t:", t)
+    lastS = s
+    print("")
+  isOk = lastS.strip()=="cC"
+  assert isOk
+  return 0
+
+
+#
+# Main script
 #
 if __name__ == "__main__":
   import sys

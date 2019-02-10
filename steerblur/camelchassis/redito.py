@@ -8,6 +8,94 @@
 
 
 #
+# CLASS CharMap
+#
+class CharMap:
+  def __init__ (self):
+    self.init_charmap()
+
+
+  def init_charmap (self):
+    self.subst = ['.'] * 256
+    self.altSubst = ['.'] * 256
+    conv = ((0xc1, 'A', "A'"),  # A-acute
+            (0xc9, 'E', "E'"),  # E-acute
+            (0xcd, 'I', "I'"),  # I-acute
+            (0xd3, 'O', "O'"),  # O-acute
+            (0xda, 'U', "U'"),  # U-acute
+            (0xe1, 'a', "a'"),  # a-acute
+            (0xe9, 'e', "e'"),  # e-acute
+            (0xed, 'i', "i'"),  # i-acute
+            (0xf3, 'o', "o'"),  # o-acute
+            (0xfa, 'u', "u'"),  # u-acute
+            (0xc3, 'A', "A~"),  # A-tilde
+            (0xd5, 'O', "O~"),  # O-tilde
+            (0xe3, 'a', "a~"),  # a-tilde
+            (0xf5, 'o', "o~"),  # o-tilde
+            (0xc0, 'A', "'A"),  # A-grave
+            (0xe0, 'a', "'a"),  # a-grave
+            (0xc7, 'C', "C,"),  # C-cedil
+            (0xe7, 'c', "c,"),  # c-cedil
+            (0x0, '', ''))
+    # Check if there are any repeated ASCII values
+    idx = 0
+    for tup in conv:
+      assert len( tup )==3
+      asciiValue = tup[ 0 ]
+      if asciiValue==0:
+        break
+      assert asciiValue>=32
+      for ch in conv[ idx+1: ]:
+        assert asciiValue!=ch[0]
+      idx += 1
+    # Start indexing:
+    idx = 32
+    while idx<=255:
+      if idx>=32 and idx<127:
+        chars = chr( idx )
+        altChars = chars
+      else:
+        chars = "."
+        altChars = chars
+        for tup in conv:
+          val = tup[ 0 ]
+          if val==idx:
+            chars = tup[ 1 ]
+            altChars = tup[ 2 ]
+            break
+      self.subst[ idx ] = chars
+      self.altSubst[ idx ] = altChars
+      idx += 1
+    for nc in ['\t', '\n']:
+      self.subst[ ord( nc ) ] = nc
+      self.altSubst[ ord( nc ) ] = nc
+    for nc in ['\r']:
+      self.subst[ ord( nc ) ] = ""
+      self.altSubst[ ord( nc ) ] = ""
+    return True
+
+
+  def simpler_ascii (self, data, altText=0):
+    s = ""
+    if type( data )==str:
+      for c in data:
+        i = ord( c )
+        if i>=256:
+          chars = "?"
+        else:
+          if altText==0:
+            chars = self.subst[ i ]
+          else:
+            chars = self.altSubst[ i ]
+        s += chars
+      return s
+    assert False
+
+
+  pass
+
+
+#
 # CLASS BasicHist -- basic histogram
 #
 class BasicHistogram:
@@ -301,6 +389,14 @@ def any_chr_rev (aStr, anyChr):
     if found:
       return idx
   return -1
+
+
+
+
+#
+# Global
+#
+xCharMap = CharMap()
 
 
 #
