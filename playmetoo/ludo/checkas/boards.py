@@ -20,6 +20,8 @@ def show_usage ():
 Params are:
     check      Basic check of xml.
 
+    dump       Dump internal struct(s).
+
     ludo-s     Check LUDO svg.
 """)
   sys.exit( 0 )
@@ -30,10 +32,21 @@ Params are:
 #
 def run_boards (outFile, inArgs):
   code = 0
+  verbose = 0
   cmd = inArgs[ 0 ]
   args = inArgs[ 1: ]
   errFile = sys.stderr
   #print("Command:", cmd, "args:", args)
+  didAny = True
+  while didAny and len( args )>0:
+    didAny = False
+    if args[ 0 ].find( '-v' )==0:
+      didAny = True
+      verbose += args[ 0 ].count( 'v' )
+      del args[ 0 ]
+      continue
+
+  # Main shirp!
   xp = YParse()
   didAny = False
   if cmd=="check":
@@ -54,6 +67,28 @@ def run_boards (outFile, inArgs):
     if not isOk:
       errFile.write(preStr + "Stack is not empty.\n")
       return 12
+  if cmd=="dump":
+    didAny = True
+    if len( args )<=0:
+      show_usage()
+    inName = args[ 0 ]
+    f = f_open_to_read( inName )
+    if f:
+      xp.add_data( f.read() )
+      for se in xp.contents:
+        s = se.props + se.tag
+        if se.text!="":
+          print("TEXT:", se.text)
+        else:
+          print("TAG:", s)
+        if verbose>0:
+          print( se )
+      if verbose>1:
+        for aProp in xp.props:
+          print("PROP:", aProp)
+    else:
+      errFile.write("Bogus...\n")
+      return 2
   if not didAny:
     show_usage()
   assert code==0
