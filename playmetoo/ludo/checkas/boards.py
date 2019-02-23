@@ -59,6 +59,9 @@ def run_boards (outFile, inArgs):
     if not f:
       errFile.write(preStr + "cannot open.\n")
       return 2
+    else:
+      if verbose>0:
+        print("Opened:", inName)
     isOk = xp.add_data( f.read() )>=0
     if not isOk:
       errFile.write(preStr + "Trailing stuff.\n")
