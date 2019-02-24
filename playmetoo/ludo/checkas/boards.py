@@ -78,7 +78,10 @@ def run_boards (outFile, inArgs):
     inName = args[ 0 ]
     f = f_open_to_read( inName )
     if f:
-      xp.add_data( f.read() )
+      content = f.read()
+      if len( content )<(xp.stepWiseProgress * 10):
+        xp.report = None
+      xp.add_data( content )
       for se in xp.contents:
         s = se.props + se.tag
         if se.text!="":
