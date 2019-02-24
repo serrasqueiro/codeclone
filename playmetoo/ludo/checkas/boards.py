@@ -9,6 +9,7 @@
 
 import sys
 from ymap import YParse, f_open_to_read
+from os import getcwd
 
 
 #
@@ -90,7 +91,9 @@ def run_boards (outFile, inArgs):
         for aProp in xp.props:
           print("PROP:", aProp)
     else:
-      errFile.write("Bogus...\n")
+      if verbose>0:
+        atStr = "at " + getcwd() + "; file: "
+      errFile.write("Bogus: " + atStr + inName + "\n")
       return 2
   if not didAny:
     show_usage()
