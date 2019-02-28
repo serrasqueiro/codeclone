@@ -7,6 +7,9 @@
 """
 
 
+import sys
+import codecs
+
 
 #
 # test_redito()
@@ -278,6 +281,7 @@ class TextRed(BinStream):
 
 
   def file_reader (self, filename=None):
+    f = None
     if filename:
       inName = filename
     else:
@@ -296,6 +300,14 @@ class TextRed(BinStream):
         f = open( inName, "r", encoding=self.inEncoding )
       self.buf = f.read()
       f.close()
+    else:
+      isOk = inName==""
+      if isOk:
+        sys.stdin = sys.stdin.detach()
+        f = sys.stdin
+        self.set_textlike()
+        self.buf = f.read()
+    if f:
       if type( self.buf )==bytes:
         mayHaveBOM = len( self.buf )>=2
         hasBOM = self.set_from_octets( self.buf[ 0 ], self.buf[ 1 ] )
@@ -501,7 +513,6 @@ xCharMap = CharMap()
 # Test suite
 #
 if __name__ == "__main__":
-  import sys
   args = sys.argv[ 1: ]
   code = test_redito( sys.stdout, args )
   sys.exit( code )
