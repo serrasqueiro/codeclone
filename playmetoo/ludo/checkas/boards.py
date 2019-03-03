@@ -142,13 +142,15 @@ def run_boards (outFile, inArgs):
         for aLine in tred.lines:
           idx += 1
           xp.add_data( aLine, idx )
-        for aProp in xp.props:
-          isEnclosed = aProp[ 0 ]==3
-          s = aProp[ 1 ]
-          isSrc = isEnclosed and s.find( "<media src=" )==0 and s[ -2: ]=="/>"
-          if isSrc:
-            src = s[ len( "<media src=" ):-2 ].strip()
-            wp.add_src( src )
+        xp.rebase_attrs( "media" )
+        for se in xp.contents:
+          if se.tag!="":
+            numAttrs = se.attrs[ 0 ]
+            if numAttrs!=0:
+              attrs = se.attrs[ 1 ]
+              print(attrs[ "src" ])
+        if False:
+          playlist_basic_add( xp.props, wp )
         print( wp )
       if not isOk:
         code = 1
@@ -157,6 +159,20 @@ def run_boards (outFile, inArgs):
   if not didAny:
     show_usage()
   return code
+
+
+#
+# playlist_basic_add() -- example of a playlist add (unused).
+#
+def playlist_basic_add (props, wp):
+  for aProp in props:
+    isEnclosed = aProp[ 0 ]==3
+    s = aProp[ 1 ]
+    isSrc = isEnclosed and s.find( "<media src=" )==0 and s[ -2: ]=="/>"
+    if isSrc:
+      src = s[ len( "<media src=" ):-2 ].strip()
+      wp.add_src( src )
+  return True
 
 
 #
