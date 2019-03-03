@@ -237,6 +237,10 @@ class TextRed(BinStream):
     self.top_init()
 
 
+  def __str__ (self):
+    return self.to_str()
+
+
   def get_filename (self):
     return self.inFilename;
 
@@ -284,6 +288,7 @@ class TextRed(BinStream):
     f = None
     if filename:
       inName = filename
+      self.inFilename = inName
     else:
       inName = self.inFilename
     isOk = True
@@ -424,6 +429,14 @@ class TextRed(BinStream):
 class BareText(TextRed):
   def top_init (self):
     self.userDefined = []
+
+
+  def to_str (self):
+    isDOS = "DOS_CR" if self.numCR==len( self.lines ) else "NL"
+    sProp2 = isDOS + ";" + self.inEncoding + ";" + "nonASCII=" + str(len( self.nonASCII7 ))
+    sProp = "lines="+str(len ( self.lines )) + ";" + self.extension[0]+":"+str( self.extension[1] ) + ";" + sProp2
+    s = self.inFilename + "\n" + sProp
+    return s
 
 
   pass

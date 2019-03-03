@@ -8,7 +8,8 @@
 
 
 import sys
-from ymap import YParse, f_open_to_read
+from ymap import *
+from redito import BareText, xCharMap
 from os import getcwd
 
 
@@ -22,6 +23,8 @@ Params are:
     check      Basic check of xml.
 
     dump       Dump internal struct(s).
+
+    playlist   Dump playlist
 
     ludo-s     Check LUDO svg.
 """)
@@ -98,9 +101,37 @@ def run_boards (outFile, inArgs):
         atStr = "at " + getcwd() + "; file: "
       errFile.write("Bogus: " + atStr + inName + "\n")
       return 2
+  if cmd=="playlist":
+    didAny = True
+    if len( args )<=0:
+      listed = [0]
+    else:
+      listed = args
+    for name in listed:
+      isStdin = type( name )==int
+      tred = BareText()
+      if isStdin:
+        isOk = tred.file_reader()
+        assert isOk
+      else:
+        isOk = tred.file_reader( name )
+      if not isOk:
+        errFile.write("Bogus: " + name + "\n")
+        return 2
+      isOk = len( tred.nonASCII7 )==0
+      if verbose>=2:
+        props = tred.to_str().split( "\n" )
+        print("playlist", "OK" if isOk else "NotOk", ":", props[ 0 ] if props[ 0 ]!="" else "(stdin)")
+        print('\n'.join( props[ 1: ] ))
+      if verbose>0:
+        for aLine in tred.lines:
+          print(aLine)
+      if not isOk:
+        code = 1
+      pass
+
   if not didAny:
     show_usage()
-  assert code==0
   return code
 
 
