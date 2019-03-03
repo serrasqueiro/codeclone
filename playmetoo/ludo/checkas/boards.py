@@ -10,6 +10,7 @@
 import sys
 from ymap import *
 from redito import BareText, xCharMap
+from playlists import *
 from os import getcwd
 
 
@@ -108,13 +109,21 @@ def run_boards (outFile, inArgs):
     else:
       listed = args
     for name in listed:
+      isWPL = False
       isStdin = type( name )==int
       tred = BareText()
+      if not isStdin:
+        fileExt = file_extension( name )
+        isWPL = fileExt==".wpl"
+      useUTF_input = isWPL
       if isStdin:
         isOk = tred.file_reader()
         assert isOk
       else:
-        isOk = tred.file_reader( name )
+        if useUTF_input:
+          isOk = tred.utf_file_reader( name )
+        else:
+          isOk = tred.file_reader( name )
       if not isOk:
         errFile.write("Bogus: " + name + "\n")
         return 2
@@ -123,9 +132,24 @@ def run_boards (outFile, inArgs):
         props = tred.to_str().split( "\n" )
         print("playlist", "OK" if isOk else "NotOk", ":", props[ 0 ] if props[ 0 ]!="" else "(stdin)")
         print('\n'.join( props[ 1: ] ))
+      wp = WpList()
       if verbose>0:
         for aLine in tred.lines:
           print(aLine)
+      else:
+        xp.tolerateCR = False
+        idx = 0
+        for aLine in tred.lines:
+          idx += 1
+          xp.add_data( aLine, idx )
+        for aProp in xp.props:
+          isEnclosed = aProp[ 0 ]==3
+          s = aProp[ 1 ]
+          isSrc = isEnclosed and s.find( "<media src=" )==0 and s[ -2: ]=="/>"
+          if isSrc:
+            src = s[ len( "<media src=" ):-2 ].strip()
+            wp.add_src( src )
+        print( wp )
       if not isOk:
         code = 1
       pass
