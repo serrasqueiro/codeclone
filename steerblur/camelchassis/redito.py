@@ -14,6 +14,16 @@ import codecs
 #
 # test_redito()
 def test_redito (out, inArgs):
+  def test_show (charmap):
+    assert type( charmap )==CharMap
+    s = "T\xe1bua on ch\xe3o"
+    for x in [0, 1]:
+      t = charmap.simpler_ascii( s, x )
+      print( t )
+      isOk = t in ["Tabua on chao", "Ta'bua on cha~o"]
+      assert isOk
+    return 0
+
   err = sys.stderr
   dosCR = ""
   args = inArgs
@@ -27,6 +37,8 @@ def test_redito (out, inArgs):
       continue
   if len( args )<0:
     return 0
+  if len( args )<=0:
+    return test_show( xCharMap )
   name = args[ 0 ]
   tred = BareText( name )
   isOk = tred.utf_file_reader()
