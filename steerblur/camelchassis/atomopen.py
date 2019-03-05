@@ -68,6 +68,8 @@ def test_atomopen (inArgs):
     name = args[ 0 ]
     del args[ 0 ]
     with AtomicOpen( name, "a" ) as aop:
+      if aop.errorCode!=0:
+        print("Bogus:", name)
       for line in args:
         if line=="":
           continue
@@ -79,21 +81,66 @@ def test_atomopen (inArgs):
           except:
             print("Breaked by user.")
           continue
-        if aop:
-          aop.write( line + "\n" )
+        if aop.file:
+          aop.file.write( line + "\n" )
         else:
           print("Did not write:", line)
       #print("Ending AtomicOpen:", name)
       pass
   if cmd=="unlock":
     global_atom_debug = 9
+    isOk = False
     name = args[ 0 ]
     if name:
       print("unlock_file():", name)
       f = open( name, "r" )
-      isOk = unlock_file( f, 1, stderr )
+      with GenHandler( f ) as handler:
+        isOk = unlock_file( handler.file, 1, stderr )
     code = 0 if isOk else 1
   return code
+
+
+#
+# CLASS GenHandler
+#
+class GenHandler:
+  def __init__ (self, f, comment=""):
+    self.errorCode = 0
+    self.file = f
+    if comment!="":
+      self.comment = comment
+    else:
+      self.comment = f.name if f else "."
+    pass
+
+
+  def close (self):
+    global global_atom_debug
+    if self.file:
+      if global_atom_debug>=9:
+        print("Closed:", self.comment)
+      self.file.close()
+      self.file = None
+      return True
+    return False
+
+
+  def __enter__ (self, *args, **kwargs):
+    return self
+
+
+  def __exit__ (self, exc_type=None, exc_value=None, traceback=None):
+    global global_atom_debug
+    if self.file:
+      if global_atom_debug>=9:
+        print("Closing handler:", self.comment)
+      self.file.close()
+      self.file = None
+    return True
+
+
+  def __str__ (self):
+    return self.comment
 
 
 #
@@ -105,11 +152,14 @@ class GenOpen:
 
 
   def init_file (self, f):
+    self.bogus = 0
     isOk = False
-    self.file = f
+    self.handler = GenHandler( f )
     if f:
       isOk = True
       self.fileSize = file_size( f )
+    else:
+      self.fileSize = -1
     return isOk
 
 
@@ -138,24 +188,28 @@ class AtomicOpen(GenOpen):
         f = None
       self.init_file( f )
       if f:
-        lock_file( self.file, self.fileSize, self.info )
+        lock_file( self.handler.file, self.fileSize, self.info )
+      else:
+        self.handler.errorCode = 1
+        if global_atom_debug>0:
+          stderr.write("Uops, errorCode="+str(self.handler.errorCode)+ ": " + path + "\n")
     else:
       self.init_file( None )
     pass
 
 
   def __enter__ (self, *args, **kwargs):
-    return self.file
+    return self.handler
 
 
   def __exit__ (self, exc_type=None, exc_value=None, traceback=None):
     # Flush to make sure all buffered contents are written to file.
-    if self.file:
-      self.file.flush()
-      os.fsync(self.file.fileno())
+    if self.handler.file:
+      self.handler.file.flush()
+      os.fsync(self.handler.file.fileno())
       # Release the lock on the file.
-      unlock_file( self.file, self.fileSize, self.info )
-      self.file.close()
+      unlock_file( self.handler.file, self.fileSize, self.info )
+      self.handler.file.close()
       # Handle exceptions that may have come up during execution, by
       # default any exceptions are raised to the user.
       if (exc_type != None):
