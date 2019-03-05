@@ -7,6 +7,8 @@ import os
 from sys import stderr
 from time import sleep
 
+global_atom_debug=0
+
 
 try:
   # Posix based file locking (Linux, Ubuntu, MacOS, etc.)
@@ -37,12 +39,11 @@ except ModuleNotFoundError:
       isOk = False
     if info and isOk:
       info.write("Unlocked: " + f.name + "\n")
-    return True
+    return isOk
 
 
 def file_size (f):
   size = os.path.getsize( os.path.realpath(f.name) )
-  print("Size:", f.name, "is:", size)
   return size
 
 
@@ -52,6 +53,7 @@ def file_size (f):
 def test_atomopen (inArgs):
   cmd = inArgs[ 0 ]
   args = inArgs[ 1: ]
+  code = 0
   if cmd=="lock":
     name = args[ 0 ]
     del args[ 0 ]
@@ -66,11 +68,17 @@ def test_atomopen (inArgs):
             print("Breaked by user.")
           continue
         aop.write( line + "\n" )
-      print("Ending AtomicOpen:", name)
+      #print("Ending AtomicOpen:", name)
+      pass
   if cmd=="unlock":
+    global_atom_debug = 9
     name = args[ 0 ]
-    ao = AtomicOpen( name )
-  return 0
+    if name:
+      print("unlock_file():", name)
+      f = open( name, "r" )
+      isOk = unlock_file( f, 1, stderr )
+    code = 0 if isOk else 1
+  return code
 
 
 #
@@ -97,7 +105,8 @@ class AtomicOpen(GenOpen):
   # Open the file with arguments provided by user. Then acquire 
   # a lock on that file object (WARNING: Advisory locking).
   def __init__ (self, path, *args, **kwargs):
-    self.init_info( stderr )
+    global global_atom_debug
+    self.init_info( stderr if global_atom_debug>0 else None )
     # Open the file and acquire a lock on the file before operating
     self.init_file( open(path, *args, **kwargs) )
     # Lock the opened file
