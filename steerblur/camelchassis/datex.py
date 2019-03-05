@@ -8,6 +8,8 @@
 
 """ obsolete by adate.py
 
+assert False	# Module is obsolete
+
 #
 # test_datex()
 #
