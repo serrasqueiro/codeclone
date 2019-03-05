@@ -8,6 +8,7 @@ from sys import stderr
 from time import sleep
 
 global_atom_debug=0
+global_atom_encoding=""
 
 
 try:
@@ -51,14 +52,25 @@ def file_size (f):
 # test_atomopen()
 #
 def test_atomopen (inArgs):
+  global global_atom_debug
   cmd = inArgs[ 0 ]
   args = inArgs[ 1: ]
   code = 0
   if cmd=="lock":
+    doAny = True
+    while len( args )>0 and doAny:
+      doAny = False
+      if args[ 0 ]=='-v':
+        doAny = True
+        global_atom_debug = 9
+        del args[ 0 ]
+        continue
     name = args[ 0 ]
     del args[ 0 ]
     with AtomicOpen( name, "a" ) as aop:
       for line in args:
+        if line=="":
+          continue
         if line.find( "sleep:" )==0:
           slp = float( line.split( ":" )[ 1 ] )
           print("sleeping...", slp)
@@ -67,7 +79,10 @@ def test_atomopen (inArgs):
           except:
             print("Breaked by user.")
           continue
-        aop.write( line + "\n" )
+        if aop:
+          aop.write( line + "\n" )
+        else:
+          print("Did not write:", line)
       #print("Ending AtomicOpen:", name)
       pass
   if cmd=="unlock":
@@ -90,9 +105,12 @@ class GenOpen:
 
 
   def init_file (self, f):
-    assert f
+    isOk = False
     self.file = f
-    self.fileSize = file_size( f )
+    if f:
+      isOk = True
+      self.fileSize = file_size( f )
+    return isOk
 
 
   pass
@@ -108,9 +126,22 @@ class AtomicOpen(GenOpen):
     global global_atom_debug
     self.init_info( stderr if global_atom_debug>0 else None )
     # Open the file and acquire a lock on the file before operating
-    self.init_file( open(path, *args, **kwargs) )
-    # Lock the opened file
-    lock_file( self.file, self.fileSize, self.info )
+    if global_atom_debug>=9:
+      print("args:", type(args), len(args), "; are:", args)
+      print("kwargs:", kwargs)
+      for key, val in kwargs.items():
+        print("key:", key, "val:", val)
+    if path!="":
+      try:
+        f = open(path, *args, **kwargs)
+      except:
+        f = None
+      self.init_file( f )
+      if f:
+        lock_file( self.file, self.fileSize, self.info )
+    else:
+      self.init_file( None )
+    pass
 
 
   def __enter__ (self, *args, **kwargs):
@@ -119,17 +150,19 @@ class AtomicOpen(GenOpen):
 
   def __exit__ (self, exc_type=None, exc_value=None, traceback=None):
     # Flush to make sure all buffered contents are written to file.
-    self.file.flush()
-    os.fsync(self.file.fileno())
-    # Release the lock on the file.
-    unlock_file( self.file, self.fileSize, self.info )
-    self.file.close()
-    # Handle exceptions that may have come up during execution, by
-    # default any exceptions are raised to the user.
-    if (exc_type != None):
-      return False
-    else:
-      return True
+    if self.file:
+      self.file.flush()
+      os.fsync(self.file.fileno())
+      # Release the lock on the file.
+      unlock_file( self.file, self.fileSize, self.info )
+      self.file.close()
+      # Handle exceptions that may have come up during execution, by
+      # default any exceptions are raised to the user.
+      if (exc_type != None):
+        return False
+      else:
+        return True
+    pass
 
 
   pass
