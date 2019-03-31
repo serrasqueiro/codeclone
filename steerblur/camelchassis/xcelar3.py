@@ -26,14 +26,38 @@ def test_xcelar3 (outFile, args):
   showBin = False
   if cmdStr=="xump":
     validCmd = True
-    if out==sys.stdout:
-      sys.stdout = rewrite( "" )
-      out = sys.stdout
+    for filename in param:
+      sys.stderr.write("Reading Xcel: " + filename + "\n")
+      rows = xcel_xlx_read( filename )
+      idx = 0
+      for row in rows:
+        idx += 1
+        isOk = True
+        try:
+          print( row )
+        except:
+          isOK = False
+        if not isOk or row[ 'A' ]==43553:
+          resume = str( row )[ :20 ]
+          sys.stderr.write("{:5}: ".format( tup[ 0 ] ) + resume + "\n")
+  if cmdStr=="dump":
+    validCmd = True
+    #if out==sys.stdout:
+    #  sys.stdout = rewrite( "" )
+    #  out = sys.stdout
     for filename in param:
       rows = xcel_xlx_read( filename )
-      for r in rows:
-        s = str( r )
-        out.write( s + '\n' )
+      rf = RexFilter( rows )
+      rf.to_lines()
+      idx = 0
+      for row in rf.lines:
+        idx += 1
+        pre = ""
+        for entry in row:
+          s = basic_ascii( entry ).strip()
+          out.write( pre + s )
+          pre = "\t"
+        out.write( "\n" )
   if cmdStr=="abmp":
     validCmd = True
     any = True
@@ -185,7 +209,10 @@ def test_xcelar3 (outFile, args):
   if validCmd==False:
     print("""Commands are:
 
+dump		Dump Xcel as ASCII.
+
 xump		Dump internal structure.
+
 abmp		Dump AB.
 """)
     return 0
