@@ -11,15 +11,47 @@
 #
 def test_amath (out, inArgs):
   code = 0
-  args = inArgs
-  if len( args )>0:
-    v = args[ 0 ]
+  if inArgs==["seq"]:
+    args = [10, 10**2, 10**3, 10**4, 10**5, 10**6, 10**7, 10**8, 10**9, 10**10]
   else:
-    v = 901
-  while v < 1001:
-    p = is_prime( v )
-    print("v:", v, "is_prime()?", "Yes" if p else "No")
-    v += 2
+    args = inArgs
+  if len( args )>0:
+    lst = []
+    for a in args:
+      if a=="97a":
+        v = a
+      else:
+        v = atoi( a )
+      p = calcNum.is_prime( v )
+      print("v:", v, "is_prime()?", p, "; divisor by:", calcNum.lastDiv)
+      try:
+        i = previous_prime( v )
+      except:
+        i = -1
+      print("Previous prime:", i if i>1 else "None?" if i!=-1 else "Non-string")
+      lst.append ( i )
+    count = 0
+    pre = "("
+    for v in lst:
+      count += 1
+      print(pre+str(v)+",", end="")
+      pre = ""
+    if count>0:
+      print(")")
+    return 0
+  for tup in [(7,10), (980,1000), (9951,10000), (99951,100000)]:
+    v = tup[ 0 ]
+    up = tup[ 1 ]
+    while v < up:
+      p = is_prime( v )
+      print("v:", v, "is_prime()?", "Yes" if p else "No", end="")
+      if p:
+        last = v
+      else:
+        print("; divisor by:", calcNum.lastDiv, end="")
+      print("")
+      v += 1+int( calcNum.is_odd(v) )
+    print("Highest prime of", up, "is:", last, "Perc.:", "{:0.3f}%".format( last/up*100.0 ))
   return code
 
 
@@ -27,8 +59,37 @@ def test_amath (out, inArgs):
 # CLASS CalcNum
 #
 class CalcNum:
-  def __init__(self):
+  def __init__ (self):
+    self.lastDiv = -1
+    self.hashed = False
     pass
+
+
+  def hash (self):
+    if self.hashed:
+      return False
+    # last prime of each power, 10^n, n=1..10:
+    self.lastPrimes = (7,97,997,9973,99991,999983,9999991,99999989,999999937,9999999967,)
+    # Note: 10^9 < 2^32 < 10^10
+    self.hashed = True
+    for v in self.lastPrimes:
+      assert is_prime(v)
+    return True
+
+
+  def is_odd (self, num):
+    return (num % 2)!=0
+
+
+  def is_even (self, num):
+    return (num % 2)==0
+
+
+  def is_prime (self, num):
+    n = atoi( num, None )
+    if n is None:
+      return False
+    return is_prime( num )
 
 
 #
@@ -67,12 +128,36 @@ def afloat (aStr, defaultValue=0.0):
 #
 # is_prime()
 #
-def is_prime (aNum):
-  n = atoi( aNum )
+def is_prime (n):
+  calcNum.lastDiv = -1
+  if n <= 1:
+    calcNum.lastDiv = n
+    return False
   for i in range(2,int(n**0.5)+1):
     if n%i==0:
+      calcNum.lastDiv = i
       return False
+  calcNum.lastDiv = n
   return True
+
+
+#
+# previous_prime()
+#
+def previous_prime (n):
+  while n > 1:
+    n -= 1
+    p = is_prime( n )
+    if p:
+      return n
+    n -= int( (n%2)!=0 )
+  return 1
+
+
+#
+# Globals
+#
+calcNum = CalcNum()
 
 
 #
