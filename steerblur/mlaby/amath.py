@@ -1,4 +1,4 @@
-# amath.py  (c)2018  Henrique Moreira (part of 'luke')
+# amath.py  (c)2019  Henrique Moreira (part of 'mlaby')
 
 """
   amath module handles diverse math functions
@@ -11,6 +11,7 @@
 #
 def test_amath (out, inArgs):
   code = 0
+  calcNum.hash()
   if inArgs==["seq"]:
     args = [10, 10**2, 10**3, 10**4, 10**5, 10**6, 10**7, 10**8, 10**9, 10**10]
   else:
@@ -21,6 +22,10 @@ def test_amath (out, inArgs):
       if a=="97a":
         v = a
       else:
+        if calcNum.is_word( a ):
+          h = calcNum.basic_whash( a )
+          print(a, "; hash:", h)
+          continue
         v = atoi( a )
       p = calcNum.is_prime( v )
       print("v:", v, "is_prime()?", p, "; divisor by:", calcNum.lastDiv)
@@ -77,6 +82,16 @@ class CalcNum:
     return True
 
 
+  def hash1000 (self, s, power=3):
+    nonNegativeK = ((sys.maxsize + 1) * 2)
+    if power>=1:
+      m = self.lastPrimes[ power-1 ]
+    else:
+      assert power>=0
+      m = 999983
+    return 1 + (hash( s ) % nonNegativeK) % m
+
+
   def is_odd (self, num):
     return (num % 2)!=0
 
@@ -90,6 +105,46 @@ class CalcNum:
     if n is None:
       return False
     return is_prime( num )
+
+
+  def basic_whash (self, word):
+    """Basic word hash.
+
+    Args:
+      word (str): the word string for the hash.
+
+    Returns:
+      int: the hash for the entered word.
+    """
+    if type( word )==str:
+      w = word.lower() + "." + word.upper()  # any dummy concatentation
+      if self.is_word( word ):
+        h = self.hash1000( w )
+      else:
+        h = 0
+      return h
+    elif type( word )==list:
+      res = []
+      for elem in word:
+        res.append( self.bash_whash( elem ) )
+      return res
+    assert False
+
+
+  def is_word (self, word, allowDash=""):
+    any = False
+    if type( word )==str:
+      c = None
+      for c in word.lower():
+        if c>='a' and c<='z':
+          any = True
+        else:
+          if c not in allowDash:
+            return False
+      if c is not None:
+        if c in allowDash:  # cannot be the latest char
+          return False
+    return any
 
 
 #
