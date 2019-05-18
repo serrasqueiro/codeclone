@@ -46,6 +46,7 @@ def test_textlike (outFile, inArgs):
   own = sys.argv[ 0 ]
   if own.endswith( "latin1_test.py" ):
     return own_latin1_test( args )
+  print("args:", args)
   if len( args )>0:
     inName = args[ 0 ]
     param = args[ 1: ]
@@ -79,18 +80,34 @@ def test_textlike (outFile, inArgs):
 #
 # test_treat_pdf()
 #
-def test_treat_pdf (tred, param):
+def test_treat_pdf (tred, inArgs, skip=None):
   import PyPDF2
+  outName = None
+  outFile = None
+  param = inArgs
+  excludeUnis = ( 0x2022, 0xba,
+                )
   pdfName = tred.get_filename()
   print("Debug test_treat_pdf:", pdfName, "; param:", param)
+  if param[0]=='-o':
+    outName = param[ 1 ]
+    del param[ :2 ]
+    print("Output:", outName)
+    outFile = open( outName, "wb" )
 
   read_pdf = PyPDF2.PdfFileReader(pdfName)
   for i in range(read_pdf.getNumPages()):
     page = read_pdf.getPage(i)
-    print('Page No - ', 1 + read_pdf.getPageNumber(page))
-    page_content = page.extractText()
-    print()
-    print( page_content )
+    print("Page No:", 1 + read_pdf.getPageNumber(page))
+    content = page.extractText()
+    print("content len:", len(content), "type:", type(content))
+    if outFile:
+      for c in content:
+        n = ord(c)
+        if n not in excludeUnis:
+          outFile.write( bytes( c, "ISO-8859-1" ) )
+  if outFile:
+    outFile.close()
   return 0
 
 
