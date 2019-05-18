@@ -8,6 +8,7 @@
 
 import sys
 from redito import BareText, xCharMap
+from patch_pdf import *
 
 
 #
@@ -85,7 +86,9 @@ def test_treat_pdf (tred, inArgs, skip=None):
   outName = None
   outFile = None
   param = inArgs
-  excludeUnis = ( 0x2022, 0xba,
+  excludeUnis = ( 0x2022,
+                  0xaa,	# feminine ordinal indicator
+                  0xba,	# masculine ordinal indicator
                 )
   pdfName = tred.get_filename()
   print("Debug test_treat_pdf:", pdfName, "; param:", param)
@@ -99,7 +102,8 @@ def test_treat_pdf (tred, inArgs, skip=None):
   for i in range(read_pdf.getNumPages()):
     page = read_pdf.getPage(i)
     print("Page No:", 1 + read_pdf.getPageNumber(page))
-    content = page.extractText()
+    page.extractText = extractText_alt_PageObject
+    content = page.extractText( page )
     print("content len:", len(content), "type:", type(content))
     if outFile:
       for c in content:
