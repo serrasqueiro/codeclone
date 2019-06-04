@@ -10,7 +10,7 @@ from getpass import getuser
 try:
  import pwd
 except ModuleNotFoundError:
- import winpwd as pwd
+ import winx_kernel as winpwd
 
 
 #
@@ -32,8 +32,9 @@ def test_gen_access (inArgs):
     print("Is dir:", p, "? " + "Yes" if d else "No")
     print("Is file:", a, "? " + "Yes" if f else "No")
     wa.a_stat( p )
-    mode = wa.fileStat.st_mode
-    print("Owner is:", wa.stat_user( wa.fileStat ), ";", "octal:", wa.ux_octal_str( mode ))
+    mode = wa.fileTrip[1].st_mode
+    owner = wa.stat_user( wa.fileTrip )
+    print("Owner is:", owner, ";", "octal:", wa.ux_octal_str( mode ))
     print("")
   return code
 
@@ -48,7 +49,7 @@ class WideAccess:
     self.user = "nobody"
     if storeUser:
       self.store_user()
-    self.fileStat = None
+    self.fileTrip = None
 
 
   def is_win (self):
@@ -90,19 +91,32 @@ class WideAccess:
 
   def a_stat (self, path):
     p = self.os_path( path )
-    self.fileStat = stat( p )
-    return self.fileStat
+    self.fileTrip = (p, stat( p ), 0)
+    return self.fileTrip
 
 
   def stat_user (self, aStat):
-    userInfo = pwd.getpwuid( aStat.st_uid )
-    print("userInfo:", userInfo)
-    return userInfo.pw_name
+    if type( aStat )==tuple:
+      assert len( aStat )==3
+      fName = aStat[ 0 ]
+      if self.is_win():
+        pSD = winpwd.get_file_security( fName )
+        uName = pSD.get_owner()[ 0 ]
+      else:
+        userInfo = pwd.getpwuid( aStat[ 1 ].st_uid )
+        uName = userInfo.pw_name
+    else:
+      assert False
+    return uName
 
 
   def ux_octal_str (self, mode):
     if type( mode )==int:
-      s = "{0:03o}".format( mode & 0o777 )
+      if self.is_win():
+        m = mode & 0o664
+      else:
+        m = mode
+      s = "{0:03o}".format( m & 0o777 )
     else:
       assert False
     return s
