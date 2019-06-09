@@ -8,6 +8,7 @@
 
 
 from base64 import b64decode, b64encode
+from amath import calcNum
 
 
 #
@@ -29,11 +30,28 @@ def test_six_rsa (out, inArgs):
     print( "{"+str( pKey )+"}", "(OK)" if isOk else "(NotOk)")
     textEnc = pKey.textual_encoding()
     if verbose>0:
-      print("MIME64 size:", pKey.mime64Size, "Max.bin.size:", pKey.mime64Size * 3/4.0, "; key bin size:", len(pKey.key))
+      print("MIME64 size:", pKey.mime64Size,
+            "Max.bin.size:", pKey.mime64Size * 3/4.0,
+            "; key bin size:", len(pKey.key))
       print("---> textual_encoding() as follow --->")
       print( textEnc )
     if not isOk:
       print("\nERRORs follow:", pKey.errors)
+  if cmd=="raw-hash":
+    pKey = HostPrivateKey( a )
+    assert pKey.is_ok()
+    for k in pKey.orig64:
+      h = calcNum.hash1000( k )
+      print("{:03d} {}".format( h, k ))
+  if cmd=="raw-hex":
+    pKey = HostPrivateKey( a )
+    assert pKey.is_ok()
+    pKey.to_hex()
+    h = pKey.hex
+    x = pKey.magic_hash()
+    print("pKey.hex, len:", len(pKey.key), "(OK)" if 2*len(pKey.key)==len( h ) else "NotOk")
+    print( h )
+    print("---\n\npKey.magic_hash():", x)
   return code
 
 
@@ -53,6 +71,7 @@ class AnyPrivKey:
   def init_any_priv_key (self):
     self.errors = []
     self.key = b''
+    self.hex = None
 
 
   def is_ok (self):
@@ -131,8 +150,28 @@ class HostPrivateKey(AnyPrivKey):
     self.key = b64decode( b )
 
 
+  def to_hex (self):
+    h = ""
+    for num in self.key:
+      nibble = "{0:02x}".format( num )
+      h += nibble
+    self.hex = h
+    return h
+
+
+  def magic_hash (self):
+    if self.hex is None:
+      to_hex()
+    subj = self.hex[ :64 ] + self.hex[ 80:86 ]
+    num = calcNum.hash1000( subj, 9 )
+    s = "0x{0:08x}".format( num )
+    # s += " {:d}d".format( num )
+    return s
+
+
 #
 # mime_lines()
+#
 def mime_lines (sInput, maxColumns=64):
   idx = 0
   s = ""

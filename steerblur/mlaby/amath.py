@@ -6,12 +6,14 @@
   Compatibility: python 2 and 3.
 """
 
+from sys import maxsize
+from os import environ
+
 #
 # test_amath()
 #
 def test_amath (out, inArgs):
   code = 0
-  calcNum.hash()
   if inArgs==["seq"]:
     args = [10, 10**2, 10**3, 10**4, 10**5, 10**6, 10**7, 10**8, 10**9, 10**10]
   else:
@@ -24,7 +26,8 @@ def test_amath (out, inArgs):
       else:
         if calcNum.is_word( a ):
           h = calcNum.basic_whash( a )
-          print(a, "; hash:", h)
+          # with PYTHONHASHSEED=12346007, hash1000("Henrique")=479
+          print(a, "; hash:", h, "hash():", calcNum.hash1000(a))
           continue
         v = atoi( a )
       p = calcNum.is_prime( v )
@@ -67,10 +70,15 @@ class CalcNum:
   def __init__ (self):
     self.lastDiv = -1
     self.hashed = False
+    self.lastPrimes = None
+    self.randomicHash = None
     pass
 
 
-  def hash (self):
+  def init_hash (self):
+    if self.randomicHash is None:
+      self.randomicHash = 12346007
+      environ[ "PYTHONHASHSEED" ] = str( self.randomicHash )
     if self.hashed:
       return False
     # last prime of each power, 10^n, n=1..10:
@@ -82,14 +90,24 @@ class CalcNum:
     return True
 
 
+  def hash (self, obj, power=9):
+    if type( obj )==str:
+      return self.hash1000( obj, power )
+    res = []
+    for a in obj:
+      res.append( self.hash( a, power ) )
+    return res
+
+
   def hash1000 (self, s, power=3):
-    nonNegativeK = ((sys.maxsize + 1) * 2)
+    assert self.lastPrimes is not None
+    nonNegativeK = maxIntSize
     if power>=1:
       m = self.lastPrimes[ power-1 ]
     else:
       assert power>=0
       m = 999983
-    return 1 + (hash( s ) % nonNegativeK) % m
+    return 1 + (custom_hash( s ) % nonNegativeK) % m
 
 
   def is_odd (self, num):
@@ -210,9 +228,20 @@ def previous_prime (n):
 
 
 #
+# custom_hash()
+#
+def custom_hash (obj):
+  # Hint:	# export PYTHONHASHSEED=12346007
+  res = hash( obj )
+  return res
+
+
+#
 # Globals
 #
 calcNum = CalcNum()
+calcNum.init_hash()
+maxIntSize = ((maxsize + 1) * 2)
 
 
 #
