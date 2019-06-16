@@ -10,6 +10,7 @@ import datetime
 import codecs
 import zipfile
 from xml.etree.ElementTree import iterparse
+from redito import xCharMap
 
 
 #
@@ -112,6 +113,12 @@ def test_xcelar3 (outFile, args):
       hasDate = False
       for r in rows:
         idx += 1
+        if 'C' not in r:
+          print("row#{} has no 'C'".format(idx), xCharMap.simpler_ascii( r ))
+          continue
+        if False:
+          if r['C'].find("TRF")==0:
+            print("E:", r['E'], "=", deval(r['E']), end='!')
         linear = None
         if 'C' in r:
           columnC = r['C']
@@ -168,7 +175,8 @@ def test_xcelar3 (outFile, args):
             s = fmtDate + aSep + val1Str + aSep + desc.strip()
           else:
             s = fmtDate + aSep + val1Str + aSep + val2Str + aSep + desc
-          out.write( s )
+          basicStr = xCharMap.simpler_ascii( s )
+          out.write( basicStr )
           out.write( "\n" )
         else:
           lineStr = "Line " + str( idx )+": "
