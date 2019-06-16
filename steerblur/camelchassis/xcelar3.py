@@ -459,6 +459,7 @@ class RexFilter:
 #
 if __name__ == "__main__":
   import sys
+  print("*"*10, "superseeded by xcelat.py", "*"*10)
   if len( sys.argv )<=1:
     code = test_xcelar3( sys.stdout, [ "xump", "a.xlsx" ] )
   else:
