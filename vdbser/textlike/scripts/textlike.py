@@ -9,6 +9,7 @@
 import sys
 from redito import BareText, xCharMap
 from patch_pdf import *
+import PyPDF2
 
 
 #
@@ -21,6 +22,7 @@ Command is one of:
   dump      Dump input file(s), 7bit-ASCII
   iso-dump  Dump input file(s), near_text() 7bit-ASCII
   utf-dump  Similar to iso-dump, but input is UTF-8
+  pdf-dump  Best-effort text dump of pdf
 \t\t-v    Verbose (or -v -v ...)
 \t\t-o    Output to (use @@ for: similar as input)
 \t\t-u    Force input to be Unix (no CRs)
@@ -31,7 +33,7 @@ Command is one of:
 #
 # test_textlike()
 #
-def test_textlike (outFile, inArgs):
+def test_textlike (outFile, errFile, inArgs):
   code = 0
   verbose = 0
   dumpClass = True
@@ -116,10 +118,58 @@ def test_treat_pdf (tred, inArgs, skip=None):
 
 
 #
+# do_pdf_dump()
+#
+def do_pdf_dump (outFile, errFile, args, opts=()):
+  assert type( opts )==tuple
+  code = 0
+  for inFile in args:
+    res = handle_pdf_dump( outFile, inFile )
+    if res!=0:
+      errFile.write("Error reading: {}\n".format( inFile ))
+      code = res
+  return code
+
+
+#
+# handle_pdf_dump()
+#
+def handle_pdf_dump (outFile,
+                     inFile,
+                     showOpt=("page-yes",),
+                     alt="."):
+  code = 0
+  showPage = showOpt[ 0 ]=="page-yes"
+  try:
+    read_pdf = PyPDF2.PdfFileReader( inFile )
+  except:
+    code = 2
+    return code
+  for i in range(read_pdf.getNumPages()):
+    page = read_pdf.getPage(i)
+    if showPage:
+      print("Page No:", 1 + read_pdf.getPageNumber(page))
+    page.extractText = extractText_alt_PageObject
+    content = page.extractText( page )
+    #print("content len:", len(content), "type:", type(content))
+    if outFile:
+      for c in content:
+        d = None
+        try:
+          outFile.write( c )
+        except:
+          d = alt
+        if d:
+          outFile.write( d )
+  return code
+
+
+#
 # textlike()
 #
-def textlike (outFile, inArgs):
+def textlike (outFile, errFile, inArgs):
   code = 0
+  opts = ()
   didAny = False
   args = inArgs
   if len( args )<=0:
@@ -128,7 +178,7 @@ def textlike (outFile, inArgs):
   del args[ 0 ]
   if cmd=="test":
     didAny = True
-    code = test_textlike( outFile, args )
+    code = test_textlike( outFile, errFile, args )
   if cmd=="dump":
     didAny = True
     code = do_dump( outFile, args )
@@ -140,6 +190,11 @@ def textlike (outFile, inArgs):
   if cmd=="utf-dump":
     didAny = True
     code = do_dump( outFile, args, "utf-8" )
+  if cmd=="pdf-dump":
+    didAny = True
+    if args==[] or args[ 0 ].startswith( "-" ):
+      dump_usage()
+    code = do_pdf_dump( outFile, errFile, args, opts )
   if didAny==False:
     dump_usage()
   return code
@@ -246,6 +301,6 @@ Cedil:
 #
 if __name__ == "__main__":
   import sys
-  code = textlike( sys.stdout, sys.argv[ 1: ] )
+  code = textlike( sys.stdout, sys.stderr, sys.argv[ 1: ] )
   sys.exit( code )
 
