@@ -100,6 +100,8 @@ def run_boards (outFile, inArgs):
     else:
       if verbose>0:
         atStr = "at " + getcwd() + "; file: "
+      else:
+        atStr = ""
       errFile.write("Bogus: " + atStr + inName + "\n")
       return 2
   if cmd=="playlist":
