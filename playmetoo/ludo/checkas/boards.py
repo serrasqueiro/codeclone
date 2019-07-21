@@ -41,6 +41,7 @@ def run_boards (outFile, inArgs):
   cmd = inArgs[ 0 ]
   args = inArgs[ 1: ]
   errFile = sys.stderr
+  skipLine = "Skipped line: "
   #print("Command:", cmd, "args:", args)
   didAny = True
   while didAny and len( args )>0:
@@ -89,14 +90,17 @@ def run_boards (outFile, inArgs):
       for se in xp.contents:
         s = se.props + se.tag
         if se.text!="":
-          print("TEXT:", se.text)
+          #print("TEXT:", se.text)
+          byprint(errFile, skipLine, "TEXT:", se.text)
         else:
           print("TAG:", s)
         if verbose>0:
-          print( se )
+          #print( se )
+          byprint( errFile, skipLine, se )
       if verbose>1:
         for aProp in xp.props:
-          print("PROP:", aProp)
+          #print("PROP:", aProp)
+          byprint(errFile, skipLine, "PROP:", aProp)
     else:
       if verbose>0:
         atStr = "at " + getcwd() + "; file: "
@@ -174,6 +178,27 @@ def playlist_basic_add (props, wp):
     if isSrc:
       src = s[ len( "<media src=" ):-2 ].strip()
       wp.add_src( src )
+  return True
+
+
+#
+# byprint()
+#
+def byprint (errFile, preStr, *p):
+  idx = 0
+  for elem in p:
+    idx += 1
+    s = str( elem )
+    if idx>1:
+      print( " ", end='' )
+    try:
+      print( s, end='' )
+    except UnicodeEncodeError:
+      q = xCharMap.simpler_ascii( str(s) )
+      if errFile:
+        errFile.write(preStr + q + "\n")
+      return False
+  print("")
   return True
 
 

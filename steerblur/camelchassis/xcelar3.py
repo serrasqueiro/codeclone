@@ -10,6 +10,7 @@ import datetime
 import codecs
 import zipfile
 from xml.etree.ElementTree import iterparse
+from redito import xCharMap
 
 
 #
@@ -26,14 +27,38 @@ def test_xcelar3 (outFile, args):
   showBin = False
   if cmdStr=="xump":
     validCmd = True
-    if out==sys.stdout:
-      sys.stdout = rewrite( "" )
-      out = sys.stdout
+    for filename in param:
+      sys.stderr.write("Reading Xcel: " + filename + "\n")
+      rows = xcel_xlx_read( filename )
+      idx = 0
+      for row in rows:
+        idx += 1
+        isOk = True
+        try:
+          print( row )
+        except:
+          isOK = False
+        if not isOk or row[ 'A' ]==43553:
+          resume = str( row )[ :20 ]
+          sys.stderr.write("{:5}: ".format( tup[ 0 ] ) + resume + "\n")
+  if cmdStr=="dump":
+    validCmd = True
+    #if out==sys.stdout:
+    #  sys.stdout = rewrite( "" )
+    #  out = sys.stdout
     for filename in param:
       rows = xcel_xlx_read( filename )
-      for r in rows:
-        s = str( r )
-        out.write( s + '\n' )
+      rf = RexFilter( rows )
+      rf.to_lines()
+      idx = 0
+      for row in rf.lines:
+        idx += 1
+        pre = ""
+        for entry in row:
+          s = basic_ascii( entry ).strip()
+          out.write( pre + s )
+          pre = "\t"
+        out.write( "\n" )
   if cmdStr=="abmp":
     validCmd = True
     any = True
@@ -88,6 +113,12 @@ def test_xcelar3 (outFile, args):
       hasDate = False
       for r in rows:
         idx += 1
+        if 'C' not in r:
+          print("row#{} has no 'C'".format(idx), xCharMap.simpler_ascii( r ))
+          continue
+        if False:
+          if r['C'].find("TRF")==0:
+            print("E:", r['E'], "=", deval(r['E']), end='!')
         linear = None
         if 'C' in r:
           columnC = r['C']
@@ -144,7 +175,8 @@ def test_xcelar3 (outFile, args):
             s = fmtDate + aSep + val1Str + aSep + desc.strip()
           else:
             s = fmtDate + aSep + val1Str + aSep + val2Str + aSep + desc
-          out.write( s )
+          basicStr = xCharMap.simpler_ascii( s )
+          out.write( basicStr )
           out.write( "\n" )
         else:
           lineStr = "Line " + str( idx )+": "
@@ -185,7 +217,10 @@ def test_xcelar3 (outFile, args):
   if validCmd==False:
     print("""Commands are:
 
+dump		Dump Xcel as ASCII.
+
 xump		Dump internal structure.
+
 abmp		Dump AB.
 """)
     return 0
@@ -432,6 +467,7 @@ class RexFilter:
 #
 if __name__ == "__main__":
   import sys
+  print("*"*10, "superseeded by xcelat.py", "*"*10)
   if len( sys.argv )<=1:
     code = test_xcelar3( sys.stdout, [ "xump", "a.xlsx" ] )
   else:

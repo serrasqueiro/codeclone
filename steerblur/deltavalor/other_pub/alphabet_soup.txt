@@ -1,0 +1,6 @@
+Interesting work gathering ISO 8859 standardized multilingual single-byte 
+coded (8bit) graphic character sets:
+	- http://czyborra.com/charsets/iso8859.html
+
+See also iso8859-1.gif (the original gif), and slightly bigger compressed 
+pic: iso8859-1.png (copied from gif).

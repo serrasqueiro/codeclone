@@ -158,7 +158,19 @@ class CharMap:
             chars = self.altSubst[ i ]
         s += chars
       return s
-    assert False
+    elif type( data )==list or type( data )==tuple:
+      res = []
+      for a in data:
+        res.append( self.simpler_ascii( a, altText ) )
+      return res
+    elif type( data )==dict:
+      res = []
+      for k, val in data.items():
+        s = self.simpler_ascii( val, altText )
+        res.append( (k, s) )
+      return res
+    else:
+      assert False
 
 
   def find_other_lookup (self, asciiNum):
