@@ -59,7 +59,9 @@ def test_amath (out, inArgs):
         print("; divisor by:", calcNum.lastDiv, end="")
       print("")
       v += 1+int( calcNum.is_odd(v) )
-    print("Highest prime of", up, "is:", last, "Perc.:", "{:0.3f}%".format( last/up*100.0 ))
+    aNext = next_prime( last )
+    print("Highest prime of {} is: {}; perc.: {:0.3f}% (next: {})".
+          format( up, last, last/up*100.0, aNext))
   return code
 
 
@@ -224,6 +226,19 @@ def previous_prime (n):
     if p:
       return n
     n -= int( (n%2)!=0 )
+  return 1
+
+
+#
+# next_prime()
+#
+def next_prime (n):
+  while True:
+    n += 1
+    p = is_prime( n )
+    if p:
+      return n
+    n += int( (n%2)!=0 )
   return 1
 
 
