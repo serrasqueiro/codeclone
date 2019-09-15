@@ -6,6 +6,8 @@
   Compatibility: python 3.
 """
 
+from PyPDF2.pdf import *
+from PyPDF2.utils import u_
 
 #
 # test_pdfz()
@@ -73,14 +75,14 @@ def extractText (obj, whichOne="alt"):
       if operator == b_("Tj"):
         _text = operands[0]
         if isinstance(_text, TextStringObject):
-          text += _text
+          text += _text + "<BR/>"
       elif operator == b_("T*"):
         text += "\n"
       elif operator == b_("'"):
         text += "\n"
         _text = operands[0]
         if isinstance(_text, TextStringObject):
-          text += "<" + operands[0] + ">"
+          text += operands[0]
       elif operator == b_('"'):
         _text = operands[2]
         if isinstance(_text, TextStringObject):
