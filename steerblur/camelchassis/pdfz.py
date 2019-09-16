@@ -67,6 +67,8 @@ def extractText (obj, whichOne="alt"):
 
     :return: a unicode string object.
     """
+    pic = ""
+    tic = "~"
     text = u_("")
     content = self["/Contents"].getObject()
     if not isinstance(content, ContentStream):
@@ -75,7 +77,7 @@ def extractText (obj, whichOne="alt"):
       if operator == b_("Tj"):
         _text = operands[0]
         if isinstance(_text, TextStringObject):
-          text += _text + "<BR/>"
+          text += _text + pic
       elif operator == b_("T*"):
         text += "\n"
       elif operator == b_("'"):
@@ -94,7 +96,7 @@ def extractText (obj, whichOne="alt"):
             text += i
         text += "\n"
       else:
-        pass
+        text += tic
     return text
 
 
