@@ -12,7 +12,7 @@ from PyPDF2.utils import u_
 #
 # test_pdfz()
 #
-def test_pdfz (outFile, inArgs):
+def test_pdfz (outFile, errFile, inArgs):
   code = None
   return code
 
