@@ -87,15 +87,18 @@ class AnyTD:
     return True
 
 
-  def lock_handle (self, who="me", debug=1):
-    try:
-      fcntl.lockf(self.ioPtr, fcntl.LOCK_EX | fcntl.LOCK_NB)
-      self.locked = who
-    except NameError:
+  def lock_handle (self, who="me", debug=0):
+    isOk = True
+    self.locked = who
+    if is_win_env():
       file_lock( self.ioPtr, self.filename )
-    except Exception as ex:
-      self.locked = "failed:2"
-    return True
+    else:
+      try:
+        fcntl.flock(self.ioPtr.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+      except Exception as ex:
+        self.locked = "failed:{}".format( ex )
+        isOk = False
+    return isOk
 
 
   def unlock (self):
@@ -133,7 +136,8 @@ class MiniTD(AnyTD):
       self.ioPtr = open( aName, "rb" )
     except Exception as ex:
       return self.fine_error( ex )
-    self.lock_handle()
+    if not self.lock_handle():
+      return (11, "Temp. unavailable")
     return (0, ".")
 
 
