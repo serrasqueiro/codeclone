@@ -6,24 +6,36 @@
   Compatibility: python 3.
 """
 
+import os
 try:
   import fcntl
 except ImportError:
-  pass
+  import msvcrt
 
 
 #
 # test_minitd()
 #
-def test_minitd (outFile, errFile, inArgs):
+def test_minitd (outFile, errFile, inFile, inArgs):
   code = None
+  verbose = 0
   try:
     cmd = inArgs[ 0 ]
   except:
     return None
   param = inArgs[ 1: ]
+  while len( param )>0 and param[ 0 ].startswith( "-" ):
+    if param[ 0 ].startswith( "-v" ):
+      verbose += param[ 0 ].count( "v" )
+      del param[ 0 ]
+      continue
+    print("Invalid option:", param[0])
+    return None
   if cmd=="test":
     tdb = MiniTD()
+    isOk = tdb.locked==None
+    assert isOk
+    code = 0
   if cmd=="show":
     fn = param[ 0 ]
     tdb = MiniTD()
@@ -31,7 +43,7 @@ def test_minitd (outFile, errFile, inArgs):
     code = err[0]
     isOk = code==0
     if not isOk:
-      errFile.write("Error {}, cannot read '{}': {}".format( code, fn, err[1] ))
+      errFile.write("Error {}, cannot read '{}': {}\n".format( code, fn, err[1] ))
       return 2
     full = tdb.read_to_mem()
     tdb.unlock()
@@ -40,6 +52,20 @@ def test_minitd (outFile, errFile, inArgs):
     for r in cont:
       idx += 1
       outFile.write("{}: {}\n".format( idx, r ))
+  if cmd=="lock":
+    fn = param[ 0 ]
+    tdb = MiniTD( fn )
+    if tdb.ioPtr is None:
+      return 2
+    print("File locked {}: {}".format( tdb.filename, tdb.locked ))
+    while True:
+      c = inFile.read( 1 )
+      if c.startswith( "." ):
+        break
+    tdb.close()
+    code = 0
+  if verbose>0:
+    errFile.write("minitd returns: {}\n".format( code ))
   return code
 
 
@@ -57,11 +83,18 @@ class AnyTD:
       if debug>0:
         print("Closing:", self.filename)
       self.ioPtr.close()
+      self.locked = None
     return True
 
 
-  def lock_handle (self):
-    # fcntl.lockf(self.ioPtr, fcntl.LOCK_EX | fcntl.LOCK_NB)
+  def lock_handle (self, who="me", debug=1):
+    try:
+      fcntl.lockf(self.ioPtr, fcntl.LOCK_EX | fcntl.LOCK_NB)
+      self.locked = who
+    except NameError:
+      file_lock( self.ioPtr, self.filename )
+    except Exception as ex:
+      self.locked = "failed:2"
     return True
 
 
@@ -84,9 +117,12 @@ class AnyTD:
 # CLASS MiniTD
 #
 class MiniTD(AnyTD):
-  def __init__ (self):
+  def __init__ (self, aName=None, doRead="r"):
     self.init_anytd()
     self.locked = None
+    if aName is not None:
+      self.set_file( aName )
+    pass
 
 
   def set_file (self, aName, lockMethod=None):
@@ -128,12 +164,46 @@ class MiniTD(AnyTD):
 
 
 #
+# is_win_env()
+#
+def is_win_env ():
+  return os.name=="nt"
+
+
+#
+# file_lock()
+#
+def file_lock (fileStream, aFilename):
+  """
+    LK_UNLCK = 0  # unlock the file region
+    LK_LOCK = 1  # lock the file region
+    LK_NBLCK = 2  # non-blocking lock
+    LK_RLCK = 3  # lock for writing
+    LK_NBRLCK = 4  # non-blocking lock for writing
+  """
+  LK_LOCK = 1
+  if is_win_env():
+    msvcrt.locking(fileStream.fileno(), LK_LOCK, os.path.getsize(aFilename))
+  return True
+
+
+#
+# file_unlock()
+#
+def file_unlock (fileStream, aFilename):
+  LK_UNLOCK = 0
+  if is_win_env():
+    msvcrt.locking(fileStream.fileno(), LK_UNLOCK, os.path.getsize(aFilename))
+  return True
+
+
+#
 # Test suite
 #
 if __name__ == "__main__":
   import sys
   args = sys.argv[ 1: ]
-  code = test_minitd( sys.stdout, sys.stderr, args )
+  code = test_minitd( sys.stdout, sys.stderr, sys.stdin, args )
   if code is None:
     print("""minitd.py command
 
