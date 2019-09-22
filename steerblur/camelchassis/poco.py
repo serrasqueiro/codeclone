@@ -19,6 +19,7 @@ def main_poco (outFile, errFile, inArgs):
   code = None
   debug = 0
   verbose = 0
+  outName = None
   try:
     cmd = inArgs[ 0 ]
   except:
@@ -28,18 +29,33 @@ def main_poco (outFile, errFile, inArgs):
   while len( param )>0 and param[ 0 ].startswith( "-" ):
     if param[ 0 ].startswith( "-v" ):
       verbose += param[ 0 ].count( "v" )
-    del param[ 0 ]
-    continue
+      del param[ 0 ]
+      continue
+    if param[ 0 ].startswith( "-o" ):
+      outName = param[ 1 ]
+      del param[ :2 ]
+      continue
     print("Invalid option(s);\n", param)
     return None
   args = param
   if verbose>=3:
     print("Debug on!")
     debug = 1
+  if outName is not None:
+    outFile = open( outName, "w" )
+  # Adjusts before run
+  readKind = "text"
+  if cmd=="seq-pdf":
+    readKind = "seq"	# no blanks
+  elif cmd=="textual-pdf":
+    readKind = "textual"
   # Command run
-  if cmd=="raw-pdf":
+  if cmd in ("raw-pdf",
+             "textual-pdf",
+             "seq-pdf",
+             ):
     inName = args[ 0 ]
-    tup = readerControl.pdf_text( inName, "text", debug )
+    tup = readerControl.pdf_text( inName, readKind, debug )
     code = tup[ 0 ]
     cont = tup[ 1 ]
     if code!=0:
@@ -47,10 +63,12 @@ def main_poco (outFile, errFile, inArgs):
         errFile.write("Cannot read pdf: {}\n".format( inName ))
       else:
         errFile.write("No content: {}\n".format(inName))
-      return code
-    for a in cont:
-      outFile.write("{}\n".format( a ))
+    else:
+      for a in cont:
+        outFile.write("{}\n".format( a ))
     code = 0
+  if outName is not None:
+    outFile.close()
   return code
 
 
@@ -60,6 +78,7 @@ def main_poco (outFile, errFile, inArgs):
 class ReaderControl:
   def __init__ (self):
     self.initFuncOriginal = PyPDF2.pdf.PageObject.extractText
+    self.excessiveStrsReplacement = (" ", ("\n", "\n(---)\n\n"))
 
 
   #
@@ -76,10 +95,12 @@ class ReaderControl:
   def pdf_text (self, inName, readKind="text", debug=0):
     assert type( inName )==str
     res = []
-    if readKind=="text":
-      PyPDF2.pdf.PageObject.extractText = extractText
-    else:
+    isOriginal = readKind=="seq"
+    isTextual = readKind=="textual"
+    if isOriginal:
       PyPDF2.pdf.PageObject.extractText = self.initFuncOriginal
+    else:
+      PyPDF2.pdf.PageObject.extractText = extractText
     try:
       op = open( inName, "rb" )
     except:
@@ -95,12 +116,12 @@ class ReaderControl:
     idx = 0
     for line in cont:
       idx += 1
-      preDebug = "" if debug<=0 else " (type: {}, len={})".format( type(line), len(line) )
+      s = line.rstrip()
+      if isTextual:
+        s = trim_excessive( s, self.excessiveStrsReplacement )
       if debug>0:
-        aList = line.split( " " )
-      else:
-        aList = [line]
-      s = "{}{}: {}".format( idx, preDebug, "\n".join( aList ) )
+        print("Debug: #{} (type: {}, len={}, strip_len={})".format( idx, type(line), len(line), len(s) ) )
+        print(s, "<<<")
       res.append( s )
     op.close()
     return (0, res)
@@ -134,6 +155,41 @@ class ReaderControl:
         last = c
       res.append( pageCont )
     return res
+
+
+#
+# trim_excessive()
+#
+def trim_excessive (s, chrs=(" ",)):
+  assert type( chrs )==tuple or type( chrs )==list
+  for tup in chrs:
+    sep = ""
+    if type( tup )==tuple:
+      e = tup[ 0 ]
+      sep = tup[ 1 ]
+      assert type( sep )==str
+    else:
+      assert type( tup )==str
+      e = tup
+    ee = e + e
+    if sep=="":
+      last = s
+      while True:
+        s = s.replace( ee, e )
+        if s==last:
+          break
+    else:
+      idx = 9999
+      while idx>=0:
+        idx -= 1
+        pos1 = s.find( ee )
+        pos2 = s.rfind( ee )
+        if pos1==-1 or pos1==pos2:
+          break
+        s = s.replace( ee, e )
+      if pos1!=-1:
+        s = s.replace( ee, sep )
+  return s
 
 
 #
