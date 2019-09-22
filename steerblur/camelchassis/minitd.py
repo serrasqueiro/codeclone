@@ -87,8 +87,9 @@ class AnyTD:
     return True
 
 
-  def lock_handle (self, who="me", debug=0):
+  def lock_handle (self, who="me", lockMethod="L", debug=0):
     isOk = True
+    assert lockMethod=="L"
     self.locked = who
     if is_win_env():
       file_lock( self.ioPtr, self.filename )
@@ -124,7 +125,7 @@ class MiniTD(AnyTD):
     self.init_anytd()
     self.locked = None
     if aName is not None:
-      self.set_file( aName )
+      self.set_file( aName, "L" )
     pass
 
 
@@ -136,9 +137,17 @@ class MiniTD(AnyTD):
       self.ioPtr = open( aName, "rb" )
     except Exception as ex:
       return self.fine_error( ex )
-    if not self.lock_handle():
-      return (11, "Temp. unavailable")
+    if lockMethod is not None:
+      if not self.lock_handle( "me", lockMethod ):
+        return (11, "Temp. unavailable")
     return (0, ".")
+
+
+  def append (self):
+    assert self.filename is not None
+    assert self.locked is None
+    self.ioPtr = open(self.filename, "ab")
+    return self.lock_handle()
 
 
   def read_to_mem (self):
