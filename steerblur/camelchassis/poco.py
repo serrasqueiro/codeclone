@@ -55,7 +55,7 @@ def main_poco (outFile, errFile, inArgs):
              "seq-pdf",
              ):
     inName = args[ 0 ]
-    tup = readerControl.pdf_text( inName, readKind, debug )
+    tup = readerControl.pdf_text( inName, readKind, errFile, debug )
     code = tup[ 0 ]
     cont = tup[ 1 ]
     if code!=0:
@@ -79,6 +79,8 @@ class ReaderControl:
   def __init__ (self):
     self.initFuncOriginal = PyPDF2.pdf.PageObject.extractText
     self.excessiveStrsReplacement = (" ", ("\n", "\n(---)\n\n"))
+    self.excCount = 0
+    self.excMaxCount = 10**5
 
 
   #
@@ -92,7 +94,7 @@ class ReaderControl:
   #
   # pdf_text()
   #
-  def pdf_text (self, inName, readKind="text", debug=0):
+  def pdf_text (self, inName, readKind="text", errFile=None, debug=0):
     assert type( inName )==str
     res = []
     isOriginal = readKind=="seq"
@@ -118,7 +120,12 @@ class ReaderControl:
       idx += 1
       s = line.rstrip()
       if isTextual:
+        readerControl.excCount = 0
         s = trim_excessive( s, self.excessiveStrsReplacement )
+        if readerControl.excCount>=readerControl.excMaxCount:
+          if errFile is not None:
+            strShown = s.replace( "\n", "\\n" )
+            errFile.write("Excessive blanks ({}) in line {}, size {}: {:<.60}\n".format( readerControl.excCount, idx, len(s), strShown ))
       if debug>0:
         print("Debug: #{} (type: {}, len={}, strip_len={})".format( idx, type(line), len(line), len(s) ) )
         print(s, "<<<")
@@ -160,7 +167,7 @@ class ReaderControl:
 #
 # trim_excessive()
 #
-def trim_excessive (s, chrs=(" ",)):
+def trim_excessive (s, chrs=(" ",), debug=1):
   assert type( chrs )==tuple or type( chrs )==list
   for tup in chrs:
     sep = ""
@@ -173,11 +180,14 @@ def trim_excessive (s, chrs=(" ",)):
       e = tup
     ee = e + e
     if sep=="":
-      last = s
-      while True:
+      i = readerControl.excMaxCount
+      while i>0:
+        last = s
         s = s.replace( ee, e )
         if s==last:
           break
+        readerControl.excCount += 1
+        i -= 1
     else:
       idx = 9999
       while idx>=0:
