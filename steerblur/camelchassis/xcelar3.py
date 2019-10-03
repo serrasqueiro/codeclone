@@ -290,7 +290,7 @@ def deval (m):
 #
 # xcel_xlx_read() -- read from xlsx
 #
-def xcel_xlx_read (filename, sheets=[], errFile=None):
+def xcel_xlx_read (filename, sheets=[], errFile=None, maxNumcols=-1):
   z = zipfile.ZipFile( filename )
   strings = [el.text for e, el in iterparse(z.open('xl/sharedStrings.xml')) if el.tag.endswith('}t')]
   rows = []
@@ -298,6 +298,7 @@ def xcel_xlx_read (filename, sheets=[], errFile=None):
   value = ''
   iter = 0
   shownIter = 0
+  tooManyCols = False
   worksheetName = "xl/worksheets/sheet1.xml"
   if len( sheets )>0:
     worksheetName = "xl/worksheets/" + sheets[ 0 ] + ".xml"
@@ -313,6 +314,10 @@ def xcel_xlx_read (filename, sheets=[], errFile=None):
       row[letter] = value
       value = ''
     if el.tag.endswith('}row'):
+      numCols = len( row )
+      if maxNumcols!=-1 and numCols>maxNumcols:
+        tooManyCols = True
+        break
       rows.append( row )
       row = {}
       iter += 1
@@ -322,7 +327,8 @@ def xcel_xlx_read (filename, sheets=[], errFile=None):
           shownIter = 100
         shownIter -= 1
   if errFile is not None:
-    errFile.write("Row: {}...\n".format(iter))
+    strBogus = " Too many columns: {}".format( numCols )
+    errFile.write("Row: {}...{}\n".format(iter, "" if not tooManyCols else strBogus))
   return rows
 
 
