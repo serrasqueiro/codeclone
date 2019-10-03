@@ -16,7 +16,7 @@ from redito import xCharMap
 #
 # test_xcelar3()
 #
-def test_xcelar3 (outFile, args):
+def test_xcelar3 (outFile, errFile, args):
   validCmd = False
   code = 0
   verbose = 0
@@ -28,7 +28,7 @@ def test_xcelar3 (outFile, args):
   if cmdStr=="xump":
     validCmd = True
     for filename in param:
-      sys.stderr.write("Reading Xcel: " + filename + "\n")
+      errFile.write("Reading Xcel: " + filename + "\n")
       rows = xcel_xlx_read( filename )
       idx = 0
       for row in rows:
@@ -40,7 +40,7 @@ def test_xcelar3 (outFile, args):
           isOK = False
         if not isOk or row[ 'A' ]==43553:
           resume = str( row )[ :20 ]
-          sys.stderr.write("{:5}: ".format( tup[ 0 ] ) + resume + "\n")
+          errFile.write("{:5}: ".format( tup[ 0 ] ) + resume + "\n")
   if cmdStr=="dump":
     validCmd = True
     #if out==sys.stdout:
@@ -181,7 +181,7 @@ def test_xcelar3 (outFile, args):
         else:
           lineStr = "Line " + str( idx )+": "
           if showWarn:
-            sys.stderr.write( lineStr + s + "\n")
+            errFile.write( lineStr + s + "\n")
   if cmdStr=="raw":
     validCmd = True
     idx = 0
@@ -290,12 +290,14 @@ def deval (m):
 #
 # xcel_xlx_read() -- read from xlsx
 #
-def xcel_xlx_read (filename, sheets=[]):
+def xcel_xlx_read (filename, sheets=[], errFile=None):
   z = zipfile.ZipFile( filename )
   strings = [el.text for e, el in iterparse(z.open('xl/sharedStrings.xml')) if el.tag.endswith('}t')]
   rows = []
   row = {}
   value = ''
+  iter = 0
+  shownIter = 0
   worksheetName = "xl/worksheets/sheet1.xml"
   if len( sheets )>0:
     worksheetName = "xl/worksheets/" + sheets[ 0 ] + ".xml"
@@ -313,6 +315,14 @@ def xcel_xlx_read (filename, sheets=[]):
     if el.tag.endswith('}row'):
       rows.append( row )
       row = {}
+      iter += 1
+      if errFile is not None:
+        if shownIter<=0:
+          errFile.write("Row: {}...\n".format( iter ))
+          shownIter = 100
+        shownIter -= 1
+  if errFile is not None:
+    errFile.write("Row: {}...\n".format(iter))
   return rows
 
 
@@ -469,8 +479,8 @@ if __name__ == "__main__":
   import sys
   print("*"*10, "superseeded by xcelat.py", "*"*10)
   if len( sys.argv )<=1:
-    code = test_xcelar3( sys.stdout, [ "xump", "a.xlsx" ] )
+    code = test_xcelar3( sys.stdout, sys.stderr, [ "xump", "a.xlsx" ] )
   else:
-    code = test_xcelar3( sys.stdout, sys.argv[ 1: ] )
+    code = test_xcelar3( sys.stdout, sys.stderr, sys.argv[ 1: ] )
   pass
 
