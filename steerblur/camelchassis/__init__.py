@@ -1,8 +1,8 @@
-"""camelchassi packages from codeclone_com
-   (c)2018  Henrique Moreira
+"""camelchassis packages from codeclone_com
+   (c)2019  Henrique Moreira
 """
 
 
-__version__ = '1.0 02'
-__date__ = '2018-08-31'
+__version__ = '1.0 03'
+__date__ = '2019-10-04'
 
