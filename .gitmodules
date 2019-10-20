@@ -1,0 +1,3 @@
+[submodule "tlslite"]
+	path = tlslite
+	url = https://github.com/serrasqueiro/tlslite.git
