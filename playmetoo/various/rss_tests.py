@@ -18,7 +18,15 @@ def main_rss_tests (outFile, errFile, inArgs):
     debug = 0
     verbose = 0
     rs = RssEcho()
-    s = rss_sample()
+    args = inArgs
+    if len( args )>0:
+        nameXML = args[ 0 ]
+    else:
+        nameXML = None
+    if nameXML is None:
+        s = rss_sample()
+    else:
+        s = open( nameXML, "r" ).read()
     s = xCharMap.simpler_ascii( s )
     rs.add_from_string( s )
     n = len( rs.content )
@@ -31,10 +39,59 @@ def main_rss_tests (outFile, errFile, inArgs):
     sCont = "\n".join( rs.content ).encode( "ascii" )
     y = etree.fromstring( sCont )
     print(">>>")
-    for e in y.iter():
-        print("tag: {},\n'{}'\n".format(e.tag, e.text))
+    rec_show( rs, y, outFile )
     print("<<<")
+    if "lastBuildDate" in rs.keying:
+        code = 0
+        sDate = rs.keying[ "lastBuildDate" ]
+        print("rs.keying['lastBuildDate']={}".format( sDate ))
+    else:
+        code = 2
     return code
+
+
+#
+# rec_show()
+#
+def rec_show (rs, y, outFile, sPre=""):
+    sNewLine = "--\n"
+    toSkip = ("explicit",
+              "copyright",
+              )
+    for e in y:
+        sClosure = ""
+        try:
+            aNamespaceMap = e.nsmap[ "itunes" ]
+        except:
+            aNamespaceMap = None
+        sTag = e.tag
+        if aNamespaceMap:
+            its = "{"+aNamespaceMap+"}"
+            if sTag.startswith( its ):
+                sTag = sTag[ len( its ): ]
+        skip = False
+        if e.text is None:
+            sText = ""
+        else:
+            sText = "\n'{}'".format(e.text.replace("\n", "$"))
+        if sTag=="lastBuildDate":
+            rs.keying[ "lastBuildDate" ] = rs.new_date( e.text )
+        else:
+            skip = sTag in toSkip
+        if not skip:
+            if outFile is not None:
+                outFile.write("{}tag: {}{}{}\n".format(sPre, sTag, sText, sClosure))
+                outFile.write("{}".format(sNewLine))
+            if isinstance(e, etree._Element):
+                """
+                if sTag=="item":
+                    rec_show(rs, e.getchildren(), outFile, sPre+"@@")
+                else:
+                """
+                if True:
+                    for son in e.iter():
+                        rec_show(rs, son, outFile, sPre+"..")
+    return True
 
 
 #
