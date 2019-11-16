@@ -7,6 +7,7 @@
 """
 
 from base64 import b64decode
+from redito import xCharMap
 
 
 #
@@ -28,6 +29,14 @@ class RawMem:
     self.leg = []
 
 
+  def simpler_str (self, s):
+    if type( s )==str:
+      a = xCharMap.simpler_ascii( s )
+    else:
+      a = "?"
+    return a
+
+
   def from_file (self, inName=None):
     fIn = open(inName, "rb")
     buf = fIn.read().decode( self.decoding )
@@ -36,17 +45,56 @@ class RawMem:
     return True
 
 
+  def out_str (self, s, isTextStream=True):
+    isStr = type( s )==str
+    if isTextStream:
+      a = s
+    else:
+      a = s.encode( self.encoding )
+    return a
+
+
+  def to_stream (self, aStream, a):
+    code = -1
+    try:
+      aStream.write( a )
+      code = 0
+    except UnicodeEncodeError:
+      s = self.simpler_str( a )
+      aStream.write( s )
+    return code
+
+
 #
 # CLASS TextMem:
 #
 class TextMem(RawMem):
   def parse (self, opts=None):
+    def flush_block (blk, toList):
+      if blk==[]:
+        return False
+      skip = False
+      one = blk[ 0 ]
+      if len( blk )<=1:
+        skip = one.startswith( "###" )
+      if skip:
+        return False
+      toList.append( blk )
+      return True
+
     code = 0
     opt = opts if opts is not None else dict()
     assert type( self.cont )==list
     h = 0
+    blk = []
     aText = ""
     for a in self.cont:
+      if a=="":
+        flush_block( blk, self.leg )
+        blk = []
+        h = 0
+      else:
+        h += 1
       try:
         tent = b64decode( a )
       except:
@@ -60,7 +108,9 @@ class TextMem(RawMem):
           s = myText[ 0 ]
         else:
           s = a
-      self.leg.append( s )
+      if h>0:
+        blk.append( s )
+    flush_block( blk, self.leg )
     return code
 
 

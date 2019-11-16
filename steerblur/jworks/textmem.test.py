@@ -33,6 +33,7 @@ def run_main (outFile, errFile, inArgs):
     outFile = open(outName, "wb")
   # Work the commands
   if cmd=="d":  # Dump, with basic check
+    code = 0
     inName = param[ 0 ]
     tm = TextMem()
     isOk = tm.from_file( inName )
@@ -44,9 +45,12 @@ def run_main (outFile, errFile, inArgs):
       assert a.endswith("\r")==False
       s = a.rstrip()
       if s!=a:
+        code = 1
         errFile.write("Line {}: dangling blanks/ tabs\n".format( line ))
       sOut = "{}\n".format( s )
-      outFile.write(sOut.encode( tm.encoding ))
+      uops = tm.to_stream( outFile, tm.out_str( sOut, outName is None ) )!=0
+      if uops:
+        errFile.write("Converted line to: {}\n".format( tm.simpler_str( s ) ))
   if cmd=="p":  # Parse
     code = 0
     inName = param[ 0 ]
@@ -54,9 +58,15 @@ def run_main (outFile, errFile, inArgs):
     tm.from_file( inName )
     tm.parse()
     for a in tm.leg:
-      s = a
+      if type( a )==str:
+        s = a
+      else:
+        if len( a )<=1:
+          s = "@\t{}\n".format( a[ 0 ] )
+        else:
+          s = "{}\n{}\n".format( a[ 0 ], a[ 1 ] )
       sOut = "{}\n".format( s )
-      outFile.write(sOut.encode( tm.encoding ))
+      tm.to_stream( outFile, tm.out_str( sOut, outName is None ) )
   return code
 
 
