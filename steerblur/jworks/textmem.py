@@ -15,6 +15,7 @@ from redito import xCharMap
 #
 class RawMem:
   def __init__ (self, buf=[], rawASCII=False):
+    self.msgs = []
     self.hash = None
     if rawASCII:
       self.decoding = "ascii"
@@ -72,6 +73,8 @@ class RawMem:
 class TextMem(RawMem):
   def parse (self, opts=None, debug=0):
     def flush_block (blk, b64Tups, toList):
+      assert type( blk )==list
+      assert type( b64Tups )==list
       if blk==[]:
         return False
       skip = False
@@ -96,21 +99,29 @@ class TextMem(RawMem):
         toList.append( aList )
       else:
         toList.append( blk )
+      b64Tups = []
       return True
 
     code = 0
     bm = Base64Mem()
     bm.hash_symbols()
     opt = opts if opts is not None else dict()
+    assert type( opt )==dict
     assert type( self.cont )==list
     h = 0
+    lastH = 0
     blk = []
     b64Tups = []
     aText = ""
+    lineIdx = 0
     for a in self.cont:
+      msg = None
+      lineIdx += 1
       if a=="":
         flush_block( blk, b64Tups, self.leg )
         blk = []
+        if lastH==0:
+          msg = "Extra empty line"
         h = 0
       else:
         h += 1
@@ -132,6 +143,12 @@ class TextMem(RawMem):
         if debug>0:
           dbgStr = "." if tent is None else tent
           print("Debug: '{}'\n{}\n".format( self.simpler_str(s), dbgStr ))
+      lastH = h
+      if msg is not None:
+        message = "Line {}: {}".format( lineIdx, msg )
+        if debug>0:
+          print("Debug:", message)
+        self.msgs.append( message )
     flush_block( blk, b64Tups, self.leg )
     return code
 

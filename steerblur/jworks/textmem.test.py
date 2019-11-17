@@ -53,7 +53,6 @@ def run_main (outFile, errFile, inArgs):
       if uops:
         errFile.write("Converted line to: {}\n".format( tm.simpler_str( s ) ))
   if cmd=="p":  # Parse
-    code = 0
     inName = param[ 0 ]
     tm = TextMem()
     if inName==".":
@@ -79,6 +78,11 @@ http://xperteleven.com/players.aspx?TeamID=1845332&Boost=0&dh=1
           s = "{}\n{}\n".format( a[ 0 ], a[ 1 ] )
       sOut = "{}\n".format( s )
       tm.to_stream( outFile, tm.out_str( sOut, outName is None ) )
+    code = 0
+    if tm.msgs!=[]:
+      code = 1
+      for msg in tm.msgs:
+        errFile.write("Warn: {}\n".format( msg ))
   if cmd=="s":
     bm = Base64Mem()
     bm.hash_symbols()
