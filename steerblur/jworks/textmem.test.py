@@ -13,6 +13,7 @@ from textmem import *
 # run_main()
 #
 def run_main (outFile, errFile, inArgs):
+  from sys import stdin
   code = None
   line = 0
   outName = None
@@ -55,7 +56,18 @@ def run_main (outFile, errFile, inArgs):
     code = 0
     inName = param[ 0 ]
     tm = TextMem()
-    tm.from_file( inName )
+    if inName==".":
+      myText = """
+textmem.test python
+KGMpMjAxOSAgSGVu
+cmlxdWUgTW9yZWlyYQ==
+
+Realfornelos, fun
+http://xperteleven.com/players.aspx?TeamID=1845332&Boost=0&dh=1
+"""
+      tm.cont = myText.split("\n")
+    else:
+      tm.from_file( inName )
     tm.parse()
     for a in tm.leg:
       if type( a )==str:
@@ -67,6 +79,20 @@ def run_main (outFile, errFile, inArgs):
           s = "{}\n{}\n".format( a[ 0 ], a[ 1 ] )
       sOut = "{}\n".format( s )
       tm.to_stream( outFile, tm.out_str( sOut, outName is None ) )
+  if cmd=="s":
+    bm = Base64Mem()
+    bm.hash_symbols()
+    w = param[ 0 ] if len( param )>0 else None
+    if w is None:
+      fp = open(stdin, "r")
+      s = fp.read()
+    elif w==".":
+      print("Base64 symbols:", bm.symbols)
+    else:
+      for c in w:
+        d = ord( c )
+        print("{}, #{}: {}".format( c, d, bm.hash[ d ] ))
+    code = 0
   return code
 
 
