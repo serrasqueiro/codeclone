@@ -16,6 +16,8 @@ def run_main (outFile, errFile, inArgs):
   from sys import stdin
   code = None
   line = 0
+  pOpt = {"allow-2-nl":True,
+          }
   outName = None
   # Processing
   if inArgs==[]:
@@ -67,7 +69,7 @@ http://xperteleven.com/players.aspx?TeamID=1845332&Boost=0&dh=1
       tm.cont = myText.split("\n")
     else:
       tm.from_file( inName )
-    tm.parse()
+    tm.parse( pOpt )
     for a in tm.leg:
       if type( a )==str:
         s = a

@@ -108,23 +108,27 @@ class TextMem(RawMem):
     opt = opts if opts is not None else dict()
     assert type( opt )==dict
     assert type( self.cont )==list
+    allowTwoEmptyNL = "allow-2-nl" in opt
     h = 0
-    lastH = 0
     blk = []
     b64Tups = []
-    aText = ""
+    lastText = ""
     lineIdx = 0
+    countEmpty = 0
     for a in self.cont:
       msg = None
       lineIdx += 1
       if a=="":
         flush_block( blk, b64Tups, self.leg )
         blk = []
-        if lastH==0:
-          msg = "Extra empty line"
+        if countEmpty>1 or (allowTwoEmptyNL and countEmpty>2):
+          msg = "Extra empty line (#{}: '{}')".format( countEmpty, lastText )
         h = 0
+        countEmpty += 1
       else:
         h += 1
+        countEmpty = 0
+        lastText = self.simpler_str( a )
       tent = bm.string_decode( a )
       if tent is None:
         s = a
@@ -143,7 +147,6 @@ class TextMem(RawMem):
         if debug>0:
           dbgStr = "." if tent is None else tent
           print("Debug: '{}'\n{}\n".format( self.simpler_str(s), dbgStr ))
-      lastH = h
       if msg is not None:
         message = "Line {}: {}".format( lineIdx, msg )
         if debug>0:
