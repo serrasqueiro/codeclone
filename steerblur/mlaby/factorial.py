@@ -3,7 +3,9 @@
 """
 
 
-#
+import math
+
+
 # main - at this script
 #
 def main (outFile, inArgs):
@@ -25,11 +27,14 @@ def main (outFile, inArgs):
 #
 # fact() -- mathematical factorial function, n!
 #
-def fact (nonNegativeNumber):
+def fact (nonNegativeNumber, doNative=True):
   assert type( nonNegativeNumber )!=float
   n = int( nonNegativeNumber )
   if n < 0:
     return -1  # error
+  if doNative:
+    num = math.factorial( n )
+    return num
   num = 1
   while n >= 1:
     num = num * n

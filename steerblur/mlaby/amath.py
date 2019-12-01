@@ -37,6 +37,7 @@ def test_amath (out, inArgs):
       except:
         i = -1
       print("Previous prime:", i if i>1 else "None?" if i!=-1 else "Non-string")
+      print("Next prime:", next_prime( v ))
       lst.append ( i )
     count = 0
     pre = "("
@@ -62,6 +63,10 @@ def test_amath (out, inArgs):
     aNext = next_prime( last )
     print("Highest prime of {} is: {}; perc.: {:0.3f}% (next: {})".
           format( up, last, last/up*100.0, aNext))
+  for a in ("Henrique", "Moreira"):
+    h1 = calcNum.tash( a )
+    h2 = calcNum.tash( a, True )
+    print("{:<10}: tash()={}, tash(16bit)={}".format( a, h1, h2 ))
   return code
 
 
@@ -74,7 +79,7 @@ class CalcNum:
     self.hashed = False
     self.lastPrimes = None
     self.randomicHash = None
-    pass
+    self.basicMod = ((65521,65537), (4294967291,4294967311))
 
 
   def init_hash (self):
@@ -110,6 +115,36 @@ class CalcNum:
       assert power>=0
       m = 999983
     return 1 + (custom_hash( s ) % nonNegativeK) % m
+
+
+  def tash (self, s, isInt16=False):
+    # Platform independent hash, similar to original Python hash
+    def tash_int (aLen, aStr, aMod):
+      maxU32 = 4294967295
+      largest_prime = self.basicMod[ 1 ][ 0 ]
+      iter = 0
+      if aLen > 0:
+        val = ord( aStr[ 0 ] )
+      else:
+        val = 0
+      x = val << 7
+      while True:
+        iter += 1
+        x = ((1000003 * x) & maxU32) ^ val
+        if iter >= aLen:
+          break
+        val = ord( aStr[ iter ] )
+      z = ((x ^ aLen) & maxU32)
+      if aMod<=0:
+        return z % largest_prime
+      return z % aMod
+
+    assert type( isInt16 )==bool
+    if type( s )==str:
+      v = tash_int( len(s), s, self.basicMod[ 0 ][ 0 ] if isInt16 else 0 )
+    else:
+      assert False
+    return v
 
 
   def is_odd (self, num):
