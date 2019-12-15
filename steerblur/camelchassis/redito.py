@@ -538,6 +538,22 @@ def any_chr_rev (aStr, anyChr):
   return -1
 
 
+#
+# currency()
+def currency (aFloat, showPlus=False, decPlacesDefault=2):
+  assert type( showPlus )==bool
+  decp = decPlacesDefault
+  assert type(decp)==int
+  if type( aFloat )==float:
+    if decp==2:
+      fmt = "{:.2f}"
+    else:
+      fmt = "{"+":.{}f".format( decp )+"}"
+  else:
+    assert False
+  res = fmt.format( aFloat )
+  if showPlus and aFloat>=0: res = "+"+res
+  return res
 
 
 #
