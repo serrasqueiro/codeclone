@@ -13,6 +13,8 @@ dict_MyPlaylists = {
     "autumn": "6656722524",
     "ultimate": "6996072584",
     "verao": "6290445124",
+    "brasil": "7010440444",
+    "trance": "4680320448",
     }
 
 
@@ -24,3 +26,7 @@ if __name__ == "__main__":
         print("{:.<12} {}".format( k, val ))
         assert type( k )==str
         assert type( val )==str
+        assert len( k )<=12
+        assert k[0].isalnum()
+        assert len(val)>=2 and len(val)<30
+        assert val.isdigit() or val.isalpha()
