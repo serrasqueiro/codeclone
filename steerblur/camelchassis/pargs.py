@@ -1,7 +1,7 @@
 # pargs.py  (c)2019  Henrique Moreira (part of 'camelchassis')
 
 """
-  pargs module handles basic text memory files.
+  pargs module handles posix arguments.
 
   Compatibility: python 2 and 3.
 """
@@ -36,7 +36,7 @@ def test_pargs (outFile, errFile, inArgs):
 #
 # arg_parse() -- posix-like argument parsing
 #
-def arg_parse (param, optEq, rest=True):
+def arg_parse (param, optEq={}, rest=True):
   dct = dict()
   assert type( param )==list
   # Check whether equivalent options are consistent
