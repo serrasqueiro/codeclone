@@ -20,12 +20,16 @@ def main (outFile, errFile, inArgs):
     param = inArgs[ 1: ]
     verbose = 0
     eq = dict()
+    eq = {"s":("--strict", ),
+          }
     opts = pargs.arg_parse(param, eq)
-    if "v" in opts:
-        verbose = opts[ "v" ]
+    if opts is None: return None
+    if "-v" in opts:
+        verbose = opts[ "-v" ]
         assert verbose<=3
     else:
-        opts[ "v" ] = 0
+        opts[ "-v" ] = 0
+    if "-s" not in opts: opts[ "-s" ] = 0
     if verbose<0:
         print("param:", param)
         for k, val in opts.items():
@@ -73,7 +77,10 @@ class MediaElem:
 #
 def media_list(outFile, errFile, opts, param):
     code = 0
-    verbose = opts[ "v" ]
+    verbose = opts[ "-v" ]
+    strictLevel = opts[ "-s" ]
+    numSep = 2
+    maxLines = 2
 
     def flush (moves, tups, numLines=2):
         if numLines>0:
@@ -105,7 +112,7 @@ def media_list(outFile, errFile, opts, param):
             if s=="":
                 if middle==[]:
                     if moves!=[]:
-                        isOk = flush(moves, tups)
+                        isOk = flush(moves, tups, maxLines)
                         if not isOk:
                             errFile.write("Line {}: invalid pairs.\n".format( line ))
                             return (1, [])
@@ -115,6 +122,12 @@ def media_list(outFile, errFile, opts, param):
                     errFile.write("Line {}: Too many empty lines ({}).\n".format( line, len(middle) ))
                     return (1, [])
             else:
+                if middle!=[] and len(tups)>0:
+                    if strictLevel>0:
+                        #print("Check lines in between:", len(middle), "s:", s)
+                        if len(middle)!=numSep:
+                            errFile.write("Line {}: Few empty lines ({}), expected {}.\n".format( line, len(middle), numSep ))
+                            return (1, [])
                 middle = []
                 moves.append( s )
         if moves!=[]:
@@ -132,8 +145,10 @@ def media_list(outFile, errFile, opts, param):
         errCode, tups = parse_input(outFile, errFile, lines)
         for mElem in tups:
             outFile.write("{}\n\n".format( mElem ))
+        h = desc[0].header
         if verbose>0:
-            outFile.write("# {}\n".format(desc[0].header))
+            if h!="#":
+                outFile.write("# {}\n".format(h))
         if errCode!=0:
             return 1
     return code

@@ -36,23 +36,48 @@ def test_pargs (outFile, errFile, inArgs):
 #
 # arg_parse() -- posix-like argument parsing
 #
-def arg_parse (param, optEq={}, rest=True):
+def arg_parse (param, optsIn={}, rest=True):
   dct = dict()
+  single = dict()
+  optEq = dict()
+  longEq = dict()
   assert type( param )==list
   # Check whether equivalent options are consistent
-  for k, val in optEq.items():
-    assert k[ 0 ]=="-"
+  for k, val in optsIn.items():
+    assert type(k)==str
+    assert k!=""
+    isOk = k[ 0 ]=="-"
+    alt = k[ 0 ].isalpha() and (len(k)==1 or k[ 1: ].isalnum())
     assert type( val )==tuple or type( val )==list
     assert len( val )>0
+    if alt:
+      aKey = "-"+k
+      single[ aKey ] = val
+    else:
+      aKey = s
+      assert isOk
+    optEq[ aKey ] = val
     for v in val:
+      assert len(v)>0
       assert v.startswith( "-" )
+      assert v not in longEq
+      longEq[ v ] = aKey
+    longEq[ aKey ] = 1
+
   while len( param )>0 and param[ 0 ].startswith( "-" ):
     p = param[ 0 ]
     if p.startswith( "--" ):
       a = p[ 2: ]
       pos = a.find( "=" )
       if pos<0:
-        dct[ a ] = 1
+        if p not in longEq:
+          return None
+        tic = longEq[ p ]
+        #print("longEq dictionary:", longEq, "tic:", tic)
+        if tic not in dct:
+          dct[ tic ] = 1
+        else:
+          dct[ tic ] += 1
       elif pos>0:
         left = a[ :pos ]
         right = a[ pos+1: ]
@@ -63,20 +88,28 @@ def arg_parse (param, optEq={}, rest=True):
     else:
       if p in optEq:
         opts = optEq[ p ]
-        if len( param )<2:
-          return None
-        dct[ opts[0] ] = param[ 1 ]
-        del param[ :2 ]
+        tic = opts[0]
+        if p in single:
+          tic = p
+          if tic not in dct:
+            dct[ tic ] = 1
+          else:
+            dct[ tic ] += 1
+          del param[ 0 ]
+        else:
+          if len( param )<2:
+            return None
+          dct[ tic ] = param[ 1 ]
+          del param[ :2 ]
       else:
         a = p[ 1: ]
         for c in a:
           opt = "-" + c
-          if opt in optEq:
-            c = optEq[ opt ][ 0 ]
-          if c in dct:
-            dct[ c ] += 1
+          tic = opt
+          if tic not in dct:
+            dct[ tic ] = 1
           else:
-            dct[ c ] = 1
+            dct[ tic ] += 1
         del param[ 0 ]
   if rest:
     dct[ "~" ] = param
