@@ -117,6 +117,31 @@ def arg_parse (param, optsIn={}, rest=True):
 
 
 #
+# split_first() -- splits only the first find
+#
+def split_first (s, splitBy, stopWhen=1):
+    res = []
+    found = 0
+    assert type( splitBy )==str
+    if splitBy=="":
+        return res
+    if type( s )==str:
+        while found<stopWhen:
+            found += 1
+            pos = s.find( splitBy )
+            if pos<0:
+                break
+            rem = s[ pos+len(splitBy): ]
+            left = s[ :pos ]
+            res.append( left )
+            s = rem
+        res.append(s)
+    else:
+        assert False
+    return res
+
+
+#
 # Test suite
 #
 if __name__ == "__main__":

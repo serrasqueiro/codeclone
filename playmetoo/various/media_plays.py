@@ -7,6 +7,7 @@
 """
 
 import pargs
+from pargs import split_first
 from redito import xCharMap
 
 
@@ -47,11 +48,12 @@ def main (outFile, errFile, inArgs):
 #
 class MediaElem:
     def __init__ (self, header=None, url=None):
+        self.ref = -1
         self.header = header
         self.urls = [] if url is None else [url]
 
 
-    def set_from_list (self, aList):
+    def set_from_list (self, aList, aRef=-1):
         if type( aList )==list or type( aList )==tuple:
             if len( aList )<2:
                 return False
@@ -59,6 +61,7 @@ class MediaElem:
             assert False
         self.header = aList[0]
         self.urls = aList[1:]
+        self.ref = int( aRef )
         return True
 
 
@@ -72,6 +75,35 @@ class MediaElem:
         return s
 
 
+    def valid_URL (self, s=None):
+        validProtos = ("file", "http", "https")
+        if type( s )==list:
+            for a in s:
+                isOk = self.valid_URL( a )
+                if not isOk: return False
+            return True
+        elif type( s )==str:
+            isOk = s.find( "://" )>1
+        elif s is None:
+            assert type( self.urls )==list
+            return self.valid_URL( self.urls )
+        else:
+            assert False
+        if isOk:
+            spl = split_first( s, "://" )
+            prot = spl[0]
+            isOk = len( spl )==2 and prot in validProtos
+        else:
+            isOk = self.valid_ref( s )
+        return isOk
+
+
+    def valid_ref (self, s):
+        assert type( s )==str
+        if s=="": return True
+        isOk = s.isdigit() or (s[0].isalpha() and s.isalnum())
+        return isOk
+
 #
 # media_list()
 #
@@ -82,13 +114,14 @@ def media_list(outFile, errFile, opts, param):
     numSep = 2
     maxLines = 2
 
-    def flush (moves, tups, numLines=2):
+    def flush (moves, tups, lineNr, numLines=2):
         if numLines>0:
             isOk = len( moves )==2
         else:
             isOk = True
         if isOk:
             mElem = MediaElem( moves[0], moves[1] )
+            mElem.ref = lineNr
             tups.append( mElem )
         return isOk
 
@@ -112,7 +145,7 @@ def media_list(outFile, errFile, opts, param):
             if s=="":
                 if middle==[]:
                     if moves!=[]:
-                        isOk = flush(moves, tups, maxLines)
+                        isOk = flush(moves, tups, line, maxLines)
                         if not isOk:
                             errFile.write("Line {}: invalid pairs.\n".format( line ))
                             return (1, [])
@@ -131,7 +164,7 @@ def media_list(outFile, errFile, opts, param):
                 middle = []
                 moves.append( s )
         if moves!=[]:
-            isOk = flush(moves, tups)
+            isOk = flush(moves, tups, line)
             if not isOk:
                 return (1, [])
         return (0, tups)
@@ -143,12 +176,25 @@ def media_list(outFile, errFile, opts, param):
         assert lines!=[]
         if lines[-1]=="": del lines[-1]
         errCode, tups = parse_input(outFile, errFile, lines)
+        bugs = 0
+        if strictLevel>0:
+            for mElem in tups:
+                assert mElem.header!=""
+                assert len(mElem.urls)>=1
+                isOk = mElem.valid_URL()
+                if not isOk:
+                    bugs += 1
+                    errFile.write("Line {}: invalid mElem: {}\n".format( mElem.ref, ";".join(mElem.urls) ))
+
         for mElem in tups:
-            outFile.write("{}\n\n".format( mElem ))
+            outFile.write("{}\n".format( mElem ))
+            if verbose>0: outFile.write("--\n")
+            outFile.write("\n")
         h = desc[0].header
+        sExtra = "" if bugs==0 else " (bugs: {})".format( bugs )
         if verbose>0:
             if h!="#":
-                outFile.write("# {}\n".format(h))
+                outFile.write("# {}{}\n".format(h, sExtra))
         if errCode!=0:
             return 1
     return code
