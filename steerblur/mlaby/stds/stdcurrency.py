@@ -20,8 +20,28 @@ def test_stdcurrency (outFile, inArgs):
     param = args[1:]
     if cmd=="a":
         code = 0
-    print("param:", param)
+    if code is not None:
+        if param:
+            print("Remaining params:", param)
     return code
+
+
+#
+# slim_dict()
+#
+def slim_dict (resDict, fields, fieldTypes={}, defVal=""):
+    assert type(fieldTypes)==dict
+    if type( fields )==list or type( fields )==tuple:
+        for f in fields:
+            notThere = f not in resDict
+            if notThere:
+                resDict[ f ] = defVal
+                print("NAME:", resDict["CtryNm"], "f:", f, "TYP:", fieldTypes)
+                if f in fieldTypes:
+                    resDict[ f ] = fieldTypes[ f ]
+    else:
+        assert False
+    return True
 
 
 #
@@ -31,8 +51,11 @@ if __name__ == "__main__":
     import sys
     code = test_stdcurrency( sys.stdout, sys.argv[ 1: ] )
     if code is None:
-        print("""stdcurrency.py
+        print("""stdcurrency.py command [options]
+Lists currencies.
+
+a       Basic dump.
+
 """)
         code = 0
     sys.exit( code )
-
