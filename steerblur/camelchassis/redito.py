@@ -16,11 +16,11 @@ import codecs
 def test_redito (out, inArgs):
   def test_show (charmap):
     assert type( charmap )==CharMap
-    s = "T\xe1bua on ch\xe3o"
+    s = "T\xe1bua on ch\xe3o em (C\xd4TE) C\xf4te Ivoir."
     for x in [0, 1]:
       t = charmap.simpler_ascii( s, x )
       print( t )
-      isOk = t in ["Tabua on chao", "Ta'bua on cha~o"]
+      isOk = t=="Tabua on chao", "Ta'bua on cha~o em (COTE) Cote Ivor."
       assert isOk
     return 0
 
@@ -89,7 +89,9 @@ class CharMap:
             (0xe3, 'a', "a~"),  # a-tilde
             (0xf5, 'o', "o~"),  # o-tilde
             (0xc0, 'A', "'A"),  # A-grave
+            (0xd4, 'O', "'O"),  # O-grave
             (0xe0, 'a', "'a"),  # a-grave
+            (0xf4, 'o', "'o"),  # o-grave
             (0xc7, 'C', "C,"),  # C-cedil
             (0xe7, 'c', "c,"),  # c-cedil
             (0x0, '', ''))
@@ -170,7 +172,9 @@ class CharMap:
         res.append( (k, s) )
       return res
     else:
+      #print("simpler_ascii(): Unsupported type:", type( data ))
       assert False
+    return None
 
 
   def find_other_lookup (self, asciiNum):
