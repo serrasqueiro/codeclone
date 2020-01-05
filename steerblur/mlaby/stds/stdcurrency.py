@@ -6,6 +6,8 @@
   Compatibility: python 2 and 3.
 """
 
+import pargs
+
 
 dict_ISO4217={
     ("AFGHANISTAN",	"Afghani", "AFN", "971", "2"),
@@ -264,7 +266,7 @@ dict_ISO4217={
     ("UNITED STATES OF AMERICA (THE)",	"US Dollar", "USD", "840", "2"),
     ("UNITED STATES OF AMERICA (THE)",	"US Dollar (Next day)", "USN", "997", "2"),
     ("URUGUAY",	"Peso Uruguayo", "UYU", "858", "2"),
-    ("URUGUAY",	"Uruguay Peso en Unidades Indexadas (UI)", "UYI", "940", "-123"),
+    ("URUGUAY",	"Uruguay Peso en Unidades Indexadas (UI)", "UYI", "940", "0"),
     ("URUGUAY",	"Unidad Previsional", "UYW", "927", "4"),
     ("UZBEKISTAN",	"Uzbekistan Sum", "UZS", "860", "2"),
     ("VANUATU",	"Vatu", "VUV", "548", "0"),
@@ -288,19 +290,43 @@ dict_ISO4217_fundList=(984, 990, 970, 979, 947, 948, 997, 940)
 #
 def test_stdcurrency (outFile, inArgs):
     code = None
+    verbose = 0
     if inArgs==[]:
         args = ["a"]
     else:
         args = inArgs
     cmd = args[0]
     param = args[1:]
+    opts = pargs.arg_parse(param)
+    if opts is None: return None
+    if "-v" in opts:
+        verbose = opts[ "-v" ]
+        assert verbose<=3
+    # Final opts parse
+    opts[ "-v" ] = verbose
+    # Command run
     if cmd=="a":
         code = 0
+        idx = 0
+        byUnits = dict()
         for row in dict_ISO4217:
             number = int( row[3] )
             isFund = number in dict_ISO4217_fundList
             pre = "fund" if isFund else "coin"
-            print(pre, row)
+            units = row[4]
+            if verbose>0:
+                print("tuples index={:.>3}:".format( idx ), pre, row)
+            else:
+                s = "; ".join( row[:-1] )
+                outFile.write("{}\n".format( s ))
+            if units not in byUnits: byUnits[units] = 0
+            byUnits[units] += 1
+            idx += 1
+        xd = SDict( byUnits )
+        if verbose>0:
+            print("Histogram of units:")
+            for x in xd.byName:
+                print("\tMinor units {}: {}".format( "<empty>" if x=="" else x, xd.get( x ) ))
     if code is not None:
         if param:
             print("Remaining params:", param)
@@ -329,6 +355,7 @@ def slim_dict (resDict, fields, fieldTypes={}, defVal=""):
 #
 if __name__ == "__main__":
     import sys
+    from stdorder import SDict
     code = test_stdcurrency( sys.stdout, sys.argv[ 1: ] )
     if code is None:
         print("""stdcurrency.py command [options]

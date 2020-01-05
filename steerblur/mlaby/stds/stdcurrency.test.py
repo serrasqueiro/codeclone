@@ -8,6 +8,7 @@
 
 from redito import xCharMap
 from stdcurrency import *
+from stdorder import *
 import xmltodict
 
 
@@ -17,12 +18,16 @@ import xmltodict
 def run_tests (outFile, errFile, inArgs):
     code = 0
     enc = "UTF-8"
-    args = inArgs
+    args = inArgs if inArgs!=[] else ["."]
     op = {"xml-in": args[ 0 ],
           "filter": "." if len(args)<=1 else args[1],
           }
     fileListOneXML = op["xml-in"]
     filter = op["filter"]
+    if fileListOneXML==".":
+        code = test_stdorder(outFile, errFile, filter)
+        assert code==0
+        return 0
     with open(fileListOneXML, "r", encoding=enc) as fd:
         data = fd.read()
         assert data.startswith("<?xml version=")
@@ -163,10 +168,88 @@ def workout (outFile, errFile, data, filter, debug=0):
     return True
 
 
+def test_stdorder (outFile, errFile, filter, debug=0):
+    verbose = 1
+    opts = {"-v": verbose,
+            "filter": filter,
+            }
+    basic_dump(outFile, errFile, opts, debug)
+    return 0
+
+
+#
+# basic_dump()
+#
+def basic_dump (outFile, errFile, opts, debug=0):
+    verbose = opts[ "-v" ]
+    aDict = dict()
+    nickDict = dict()
+    content = dict_ISO4217
+    content_2 = dict_ISO4217_fundList
+    for row in content:
+        assert len(row) == 5
+        country, currency, nick, number, units = row
+        if number in aDict:
+            aDict[number].append(row)
+        else:
+            aDict[number] = [row]
+        sNick = "---" if nick == "" else nick
+        s = "{:>3} {:<3} {} '{}'".format(number, sNick, country, currency.replace(" ", "_"))
+        if verbose >= 2:
+            outFile.write("{}\n".format(s))
+        vNumber = int( number )
+        if sNick not in nickDict:
+            nickDict[sNick] = [vNumber, currency, 1]
+        else:
+            assert nickDict[sNick][:2]==[vNumber, currency]
+            nickDict[sNick][2] += 1
+    nicks = SDict( nickDict )
+    for x in nicks.byName:
+        print("nick:", x, "is:", nicks.get( x ))
+    xd = nicks.histog( 3, True )
+    # Now show first the mostly used currencies:
+    if verbose>0:
+        print("\n...")
+        highCount = xd.byName[0]
+        assert highCount>=1
+        h = [0] * (highCount+1)  # we only need e.g. 35+1 elements if the mostly used currency occurs 35 times
+        occIter = [i for i in range(highCount, 0, -1)]  # e.g. 35 down to 1
+        for n in occIter:
+            z = xd.get( n )
+            if z: h[n] = z
+        for n in occIter:
+            z = h[n]
+            if z>0:
+                for x in nicks.byName:
+                    tup = nicks.ori[ x ]
+                    y = tup[ 2 ]
+                    if y==n:
+                        number, currency = tup[:2]
+                        xtra = " [***fund***]" if number in content_2 else ""
+                        print("Histog.: {:>3} {} (appears {}){}".format( number, currency, "once" if n<=1 else str(n)+"*", xtra ))
+                        for row in content:
+                            country1, currency1, nick1, number1, units1 = row
+                            vNumber = int( number1 )
+                            if number==vNumber:
+                                print("\tat: {}".format( country1 ))
+                        print("")
+    return 0
+
+
 #
 # Test suite
 #
 if __name__ == "__main__":
     import sys
+    """ stdcurrency.test.py dotOrXML [...]
+
+dotOrXML is either a dot ('.'), or an xml file containing
+	https://www.currency-iso.org/dam/downloads/lists/list_one.xml
+or alike.
+This will then generate the tuples which can be copied down to stdcurrency.py, e.g.
+    ("AFGHANISTAN",	"Afghani", "AFN", "971", "2"), ...
+
+If you enter nothing, or a dot, this script will simply dump the histogram of coins.
+    """
     code = run_tests( sys.stdout, sys.stderr, sys.argv[ 1: ] )
     sys.exit( code )
