@@ -173,15 +173,17 @@ def test_stdorder (outFile, errFile, filter, debug=0):
     opts = {"-v": verbose,
             "filter": filter,
             }
-    basic_dump(outFile, errFile, opts, debug)
+    iCurrency = SCurrency()
+    basic_dump(outFile, errFile, iCurrency, opts, debug)
     return 0
 
 
 #
 # basic_dump()
 #
-def basic_dump (outFile, errFile, opts, debug=0):
+def basic_dump (outFile, errFile, iCurrency, opts, debug=0):
     verbose = opts[ "-v" ]
+    verbose += int(debug)
     aDict = dict()
     nickDict = dict()
     content = dict_ISO4217
@@ -206,6 +208,10 @@ def basic_dump (outFile, errFile, opts, debug=0):
     nicks = SDict( nickDict )
     for x in nicks.byName:
         print("nick:", x, "is:", nicks.get( x ))
+    for nick in iCurrency.currencies.byName:
+        number, currency, units = iCurrency.currencies.get( nick )
+        if verbose>=2 and number>0:
+            print("INFO: {} = {:3} '{}' (Minor units: {})".format( nick, number, currency, units ))
     xd = nicks.histog( 3, True )
     # Now show first the mostly used currencies:
     if verbose>0:
@@ -226,7 +232,8 @@ def basic_dump (outFile, errFile, opts, debug=0):
                     if y==n:
                         number, currency = tup[:2]
                         xtra = " [***fund***]" if number in content_2 else ""
-                        print("Histog.: {:>3} {} (appears {}){}".format( number, currency, "once" if n<=1 else str(n)+"*", xtra ))
+                        print("Histog.: {:>3} ({}) {} (appears {}){}".format( number, iCurrency.by_number(number), currency, "once" if n<=1 else str(n)+"*", xtra ))
+                        assert iCurrency.by_abbrev( iCurrency.by_number(number) )==number
                         for row in content:
                             country1, currency1, nick1, number1, units1 = row
                             vNumber = int( number1 )

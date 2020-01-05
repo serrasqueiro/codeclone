@@ -7,6 +7,7 @@
 """
 
 import pargs
+from stdorder import SDict
 
 
 dict_ISO4217={
@@ -331,6 +332,57 @@ def test_stdcurrency (outFile, inArgs):
         if param:
             print("Remaining params:", param)
     return code
+
+
+#
+# CLASS SCurrency
+#
+class SCurrency():
+    def __init__ (self, autoHash=True):
+        self.baseCurrencies = dict_ISO4217
+        self.byAbbrev = dict()
+        self.byNumber = dict()
+        self.currencies = SDict()
+        if autoHash:
+            self.hash()
+
+
+    def hash (self):
+        ccy = dict()
+        for row in self.baseCurrencies:
+            country, currency, nick, number, units = row
+            assert type(number)==str
+            vNumber = int( number )
+            if nick not in self.byAbbrev:
+                self.byAbbrev[ nick ] = vNumber
+                ccy[ nick ] = (vNumber, currency, units)
+            else:
+                assert self.byAbbrev[ nick ]==vNumber
+            if number not in self.byNumber:
+                self.byNumber[ vNumber ] = nick
+            else:
+                assert self.byNumber[ vNumber ]==nick
+        self.currencies = SDict( ccy )
+        return True
+
+
+    def by_number (self, vNumber):
+        assert type(vNumber)==int
+        return self.byNumber[ vNumber ]
+
+
+    def by_abbrev (self, sAbbrev):
+        if type(sAbbrev)==str:
+            nick = sAbbrev
+            return self.byAbbrev[ nick ]
+        else:
+            for nick in sAbbrev:
+                try:
+                    n = self.by_abbrev( nick )
+                except:
+                    n = None
+                if n is not None: return n
+        return -1
 
 
 #
