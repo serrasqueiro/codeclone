@@ -43,7 +43,13 @@ def workout (outFile, errFile, data, filter, debug=0):
         928: "Bolivar Soberano",
         }
     keep = dict()
-    print("Filter:", filter)
+    uQue = dict()  # Uniqueness of keys
+    fundList = []
+    isProg = filter=="."
+    if isProg:
+        outFile.write("dict_ISO4217={\n")
+    else:
+        print("Filter:", filter)
     d = xmltodict.parse( data )
     cont = d["ISO_4217"]
     currencyTable = cont["CcyTbl"]
@@ -74,24 +80,54 @@ def workout (outFile, errFile, data, filter, debug=0):
         elem = country
         fields = ("CtryNm", "CcyNm", "Ccy", "CcyNbr", "CcyMnrUnts")
         slim_dict( elem, fields, {"CcyNbr":0} )
-        entity, nm, ccy, sNumber, unts = elem["CtryNm"], elem["CcyNm"], elem["Ccy"], elem["CcyNbr"], elem["CcyMnrUnts"]
+        entity, aName, ccy, sNumber, unts = elem["CtryNm"], elem["CcyNm"], elem["Ccy"], elem["CcyNbr"], elem["CcyMnrUnts"]
+        if  type(aName)==str:
+            nm = aName
+            isFund = False
+        else:
+            nm = aName["#text"]
+            isOk = aName["@IsFund"]=="true"
+            assert isOk
+            isFund = isOk
         number = int( sNumber )
-        if number==978:
+        if entity[ 1: ]=="ALAND ISLANDS"[ 1: ]:
             entity = "ALAND ISLANDS"
         elif number==418:
             entity = "LAOS"
         elif number==408:
             entity = "NORTH KOREA"
-        elif number==952:
+        elif entity.endswith( "IVOIRE" ):
             entity = "COTE D'IVOIRE"
-        elif number==532:
+        elif entity.startswith( "CURA" ):
             entity = "CURACAO"
+        elif entity.startswith( "SAINT BART" ):
+            entity = "SAINT BARTHELEMY"
+        elif entity[0]=="R" and entity.endswith( "UNION" ):
+            entity = "REUNION"
+        elif entity=='SISTEMA UNITARIO DE COMPENSACION REGIONAL DE PAGOS "SUCRE"':
+            entity = entity[ :entity.find('"') ].strip()
         s = "{3}; {0}; {1}; {2}; {4}\n".format( entity, nm, ccy, number, unts )
+        prog = " "*4 + '("{0}",\t"{1}", "{2}", "{3}", "{4}"),\n'.format( entity, nm, ccy, number, unts )
         ignore = entity.startswith("ZZ")
+        isOk = (ignore and not isFund) or not ignore
+        assert isOk
+        # Check uniqueness
+        if entity=="UNITED STATES MINOR OUTLYING ISLANDS (THE)":
+            uq = "USMOI-USD"
+        elif entity=="VIRGIN ISLANDS (BRITISH)":
+            uq = "VIGB-USD"
+        else:
+            uq = "{}{}".format( "_".join(entity.split(" ")[:2]), ccy if ccy=="" else "-"+ccy )
+        isOk = uq not in uQue
+        if not isOk:
+            errFile.write("Non unique key ({}), first seen here: {}==> {}\n".format( uq, uQue[uq], s ))
+        assert isOk
+        uQue[ uq ] = s
+        #print("Debug:", xCharMap.simpler_ascii( uq ))
         if ignore: continue
         bogus = False
         try:
-            outFile.write(s)
+            outFile.write(prog if isProg else s)
         except:
             bogus = True
         if bogus:
@@ -99,6 +135,8 @@ def workout (outFile, errFile, data, filter, debug=0):
             keep[ idx ] = s
         assert int( number )>=0
         assert entity!=""
+        if isFund:
+            fundList.append(number)
     if "q" not in filter:
         pub = cont["@Pblshd"]
         errFile.write("Published: '{}'\n".format( pub ))
@@ -107,6 +145,21 @@ def workout (outFile, errFile, data, filter, debug=0):
         for k, val in keep.items():
             s = xCharMap.simpler_ascii( val )
             print("Index:", k, ";", s)
+    """
+	(***) We avoid having properties such as the following:
+
+	#984; BOLIVIA (PLURINATIONAL STATE OF); OrderedDict([('@IsFund', 'true'), ('#text', 'Mvdol')]); BOV; 2
+	...caused by:
+		<CcyNm IsFund="true">Mvdol</CcyNm>
+	Note the regular bolivian coin is:
+	# 68; BOLIVIA (PLURINATIONAL STATE OF); Boliviano; BOB; 2
+	#	(here 'ccy' is "BOB")
+    """
+    if isProg:
+        outFile.write(" "*4+"}\n\n")
+        outFile.write("dict_ISO4217_fundList={}\n\n".format( tuple(fundList) ))
+    else:
+        print("Fund list:", tuple( fundList ))
     return True
 
 
