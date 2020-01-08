@@ -172,7 +172,10 @@ def media_list(outFile, errFile, opts, param):
     for name in param:
         desc = [MediaElem("#"), [], (name,)]
         comment, mList = desc[0], desc[1]
-        lines = open(name, "r").read().split("\n")
+        encRead = "ISO-8859-1"
+        with open(name, "r", encoding=encRead) as fIn:
+            txtData = fIn.read()
+        lines = txtData.split("\n")
         assert lines!=[]
         if lines[-1]=="": del lines[-1]
         errCode, tups = parse_input(outFile, errFile, lines)
