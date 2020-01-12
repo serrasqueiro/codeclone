@@ -17,6 +17,7 @@ dict_MyPlaylists = {
     "trance": "4680320448",
     "blue": "7045636564",
     "criando2020": "7055103684",
+    "tribute": "5987955924",
     }
 
 # digital grid on operator 1:
