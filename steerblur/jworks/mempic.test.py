@@ -46,7 +46,7 @@ def run_main (outFile, errFile, inArgs):
         if data is None:
             print("{}: too short".format( name ))
             return 3
-        if data.isascii():
+        if type(data)!=bytes and data.isascii():
             decoded = data.decode("latin-1")
             sPreHeader = xCharMap.simpler_ascii( decoded.replace("\n","\\n") )
         else:
@@ -103,7 +103,8 @@ def dump_exif_details (outFile, name, pm, filter=None):
                     s = y[:maxShownLen] if len(y) > maxShownLen else y
                 post = "(...)" if len(y) > maxShownLen else ""
                 doShow = showAll
-                shown = f"{x}: {s}{post}"
+                ###shown = f"{x}: {s}{post}"
+                shown = "{}: {}{}".format( x, s, post )
                 if doShow:
                     if outFile is not None: outFile.write( "{}\n".format( shown ) )
                     desc.append( shown )
