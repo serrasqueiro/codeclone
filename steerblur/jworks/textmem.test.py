@@ -21,7 +21,7 @@ def run_main (outFile, errFile, inArgs):
   outName = None
   # Processing
   if inArgs==[]:
-    return run_main(outFile, errFile, ["a"])
+    return run_main(outFile, errFile, ["p", "mem_test.txt"])
   cmd = inArgs[ 0 ]
   param = inArgs[ 1: ]
   # Checking options
