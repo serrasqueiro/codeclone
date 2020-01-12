@@ -23,6 +23,7 @@ class RawPic:
 class PicMem(RawPic):
     def read (self, name):
         img = Image.open( name )
+        self.pict = Pict( img )
         ex = img.getexif()
         aDict = dict(ex) if ex is not None else None
         self.meta = {"EXIF": aDict,
@@ -37,6 +38,13 @@ class PicMem(RawPic):
     def get_info (self):
         assert self.meta is not None
         return self.meta["EXIF"]
+
+
+    def has_exif (self):
+        sizeX, sizeY = self.meta["info"]["width"], self.meta["info"]["height"]
+        if sizeX==-1:
+            assert sizeY==-1
+        return sizeX>0
 
 
     def _base_parse (self, exifInfo, outMeta):
@@ -63,6 +71,38 @@ class PicMem(RawPic):
         outMeta["main"] = dMain
         outMeta["info"] = dInfo
         return True
+
+
+#
+# CLASS Pict
+#
+class Pict():
+    def __init__ (self, img=None):
+        self.img = img
+        self._parse_picture( img )
+
+
+    def _parse_picture (self, img):
+        """
+        Parses PIL image
+        :param img:
+        :return: bool (whether image is correct)
+        """
+        if img is None: return False
+        """
+        See also:
+		https://stackoverflow.com/questions/6444548/how-do-i-get-the-picture-size-with-pil
+        """
+        self.size = img.size  # size[0]=x, size[1]=y
+        return True
+
+
+    def width (self):
+        return self.size[0]
+
+
+    def height (self):
+        return self.size[1]
 
 
 #

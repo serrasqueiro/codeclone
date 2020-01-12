@@ -50,24 +50,32 @@ def run_main (outFile, errFile, inArgs):
             decoded = data.decode("latin-1")
             sPreHeader = xCharMap.simpler_ascii( decoded.replace("\n","\\n") )
         else:
-            print("Bin, read exif:", name)
+            bKind = data[6:11]
+            isOk = type(bKind)==bytes
+            assert isOk
+            print("Bin, read exif: {} ({})".format( name, bKind ))
             isOk = pm.read( name )
             assert isOk
             x = pm.meta["info"]["width"]
             y = pm.meta["info"]["height"]
             if verbose>0:
-                print("\tx={}: {}; y={}: {}".format(x, pm.meta["main"]["x"], y, pm.meta["main"]["y"]))
                 infos = dump_exif_details(outFile, name, pm)
             else:
                 infos = dump_exif_details(outFile, name, pm, fieldStarList )
-            bKind = data[6:11]
-            isOk = type(bKind)==bytes
-            assert isOk
-            sExifOffset = infos[1]["ExifOffset"]
-            sPreHeader = "({}), ExifOffset={}".format( bKind, sExifOffset )
-        if verbose>0:
-            if sPreHeader:
-                print("{}: [{}]".format( name, sPreHeader ))
+            sExifOffset = infos[1].get("ExifOffset")
+            if sExifOffset is None: sExifOffset = "."
+            sPreHeader = "ExifOffset={}".format(sExifOffset)
+            sizeXDict = pm.meta["main"]["x"]
+            sizeYDict = pm.meta["main"]["y"]
+            if len(sizeXDict)<=0:
+                sizeXDict, sizeYDict = "()", "()"
+            sizeX = pm.pict.width()
+            sizeY = pm.pict.height()
+            if verbose>0:
+                if pm.has_exif():
+                    print("\tx={}={}: {}; y={}={}: {}".format(x, sizeX, sizeXDict, sizeY, y, sizeYDict, sPreHeader))
+                else:
+                    print("\tx={}, y={}; NO EXIF".format(sizeX, sizeY))
         code = 0
     return code
 
