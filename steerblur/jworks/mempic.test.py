@@ -50,17 +50,24 @@ def run_main (outFile, errFile, inArgs):
             decoded = data.decode("latin-1")
             sPreHeader = xCharMap.simpler_ascii( decoded.replace("\n","\\n") )
         else:
-            print("Bin, read exif")
+            print("Bin, read exif:", name)
             isOk = pm.read( name )
             assert isOk
-            ed = pm.meta[ "EXIF" ]
+            x = pm.meta["info"]["width"]
+            y = pm.meta["info"]["height"]
             if verbose>0:
-                dump_exif_details(outFile, name, ed)
+                print("\tx={}: {}; y={}: {}".format(x, pm.meta["main"]["x"], y, pm.meta["main"]["y"]))
+                infos = dump_exif_details(outFile, name, pm)
             else:
-                dump_exif_details(outFile, name, ed, fieldStarList )
+                infos = dump_exif_details(outFile, name, pm, fieldStarList )
+            bKind = data[6:11]
+            isOk = type(bKind)==bytes
+            assert isOk
+            sExifOffset = infos[1]["ExifOffset"]
+            sPreHeader = "({}), ExifOffset={}".format( bKind, sExifOffset )
         if verbose>0:
             if sPreHeader:
-              print("{}: {}[]".format( name, sPreHeader ))
+                print("{}: [{}]".format( name, sPreHeader ))
         code = 0
     return code
 
@@ -68,12 +75,18 @@ def run_main (outFile, errFile, inArgs):
 #
 # dump_exif_details()
 #
-def dump_exif_details (outFile, name, img_exif_dict, filter=None):
-    res = []
-    ed = img_exif_dict
+def dump_exif_details (outFile, name, pm, filter=None):
+    res, desc = list(), list()
+    myDict = dict()
+    ed = pm.meta["EXIF"]
     showAll = filter is None
     maxShownLen = 60
-    for key, val in ed.items():
+    showEmpty = "-"
+    # for key, val in ed.items(): -- would not be sorted by the EXIF id
+    orderedKeys = list( ed.keys() )
+    orderedKeys.sort()
+    for key in orderedKeys:
+        val = ed[key]
         if key in ExifTags.TAGS:
             x = ExifTags.TAGS[key]
             if type(val)==bytes:
@@ -83,14 +96,19 @@ def dump_exif_details (outFile, name, img_exif_dict, filter=None):
             else:
                 y = val
             if x not in ("MakerNote",
-                           ):
-                s = y[:maxShownLen] if len(y) > maxShownLen else y
+                         ):
+                if type(y)==str and y.strip()=="":
+                    s = showEmpty
+                else:
+                    s = y[:maxShownLen] if len(y) > maxShownLen else y
                 post = "(...)" if len(y) > maxShownLen else ""
                 doShow = showAll
                 shown = f"{x}: {s}{post}"
                 if doShow:
-                    outFile.write( "{}\n".format( shown ) )
-                    res.append( shown )
+                    if outFile is not None: outFile.write( "{}\n".format( shown ) )
+                    desc.append( shown )
+                myDict[ x ] = val
+    res = (desc, myDict)
     return res
 
 
