@@ -128,6 +128,10 @@ class ZSheets():
         self.sheets, self.cont = tup
 
 
+    def contents (self):
+        return self.sheets, self.cont
+
+
     def xlx_read (self, filename, sheets=[], debug=0):
         z = zipfile.ZipFile( filename )
         try:
