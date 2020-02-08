@@ -115,6 +115,45 @@ class ZTable:
         return s
 
 
+    def alt_chr_separated (self, entry, adapt, sep=";"):
+        tryBlanks = True
+        if sep is None:
+            return self.chr_separated(entry, None)
+        s = ""
+        idx = 0
+        if type( entry )==list or type( entry )==tuple:
+            faceToAll = adapt.get( "*" )
+            if faceToAll is not None:
+                assert type( faceToAll )==dict
+            for a in entry:
+                idx += 1
+                if idx>1:
+                    s += sep
+                letra = num_to_column_letters(idx)
+                aText = self.textual( a )
+                face = adapt.get( letra )
+                if face is not None or faceToAll is not None:
+                    if face is None: face = faceToAll
+                if face is not None:
+                    repl = face.get( "replace" )
+                    if repl is not None:
+                        for a, b in repl:
+                            for tryReplace in ("normal", "strip" if tryBlanks else ""):
+                                if tryReplace=="": break
+                                assert a!=b
+                                assert a!=""
+                                if tryReplace=="strip":
+                                    aStr = cut_excess( aText )
+                                else:
+                                    aStr = aText
+                                q = aStr.replace(a, b)
+                                if q!=aText:
+                                    aText = q
+                                    break
+                s += aText
+        return s
+
+
 #
 # ZSheets
 #
@@ -235,6 +274,73 @@ def friendly_float (s, decPlaces, trimRight=True):
         if a.find(".")!=-1:
             a = a.rstrip("0").rstrip(".")
     return a
+
+
+#
+# cut_excess()
+#
+def cut_excess (s, cutWhat=(("  ", " "), ("\t", " "))):
+    if type( s )==str:
+        q = s
+        for this, by in cutWhat:
+            if this=="" or this==by: break
+            count = 10**4
+            while count>0:
+                count -= 1
+                r = q.replace( this, by )
+                if q==r: break
+                q = r
+            assert count>0
+        res = q
+    else:
+        assert False
+    return res
+
+
+#
+# expand_adapt()
+#
+def expand_adapt (d):
+    def basic_rules (rule, there=None):
+        assert type(rule)==dict
+        r = dict()
+        if there is None:
+            for k, val in rule.items():
+                assert type( val )==tuple
+                r[ k ] = list( val )
+        else:
+            assert type(there)==dict
+            # there is e.g. '{"replace", tuple("a","b")}'
+            for k, tup in rule.items():
+                val = list( tup )
+                there[ k ] += val
+        return r
+
+    assert type(d)==dict
+    count = 0
+    toDel = []
+    copy = dict()
+    byName = list( d.keys() )
+    byName.sort()
+    for k in byName:
+        val = d[ k ]
+        count += 10
+        cols = k.split(";")
+        if len( cols )>1:
+            toDel.append( k )
+            for c in cols:
+                count += 1
+                if c in copy:
+                    basic_rules( val, copy[ c ] )
+                else:
+                    copy[ c ] = basic_rules( val )
+        else:
+            copy[ k ] = basic_rules( val )
+    for k in toDel:
+        del d[ k ]
+    for k, val in copy.items():
+        d[ k ] = val
+    return count
 
 
 #
