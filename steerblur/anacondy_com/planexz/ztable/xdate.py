@@ -78,23 +78,26 @@ class MsTime():
 
     def _set_from_time (self, s):
         isOk = False
-        r, v = None, None
+        r, h = None, None
         comp = None
-        if type( s )==float:
-            v = s * 24.0
-        elif type( s )==str:
+        if isinstance(s, float):
+            h = s * 24.0
+        elif isinstance(s, str):
             if s.count(":")==1:
                 comp = s
             else:
                 if s!="":
-                    v = float( s ) * 24.0
+                    h = float(s) * 24.0
         if comp:
             isOk = True
             r = comp
         else:
-            if v is not None:
+            if h is not None:
                 isOk = True
-                r = "{:.2f}".format( v ).replace(".", ":")
+                v = float(int(h))
+                halves = float(h - v) * 60.0 / 100.0
+                v += halves
+                r = "{:.2f}".format(v).replace(".", ":")
         return isOk, r
 
 
