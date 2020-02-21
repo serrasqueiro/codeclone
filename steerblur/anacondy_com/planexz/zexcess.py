@@ -26,8 +26,8 @@ class ZTable:
 
 
     def _init_ztable (self, t):
-        if type( t )==list:
-            if len( t )>0:
+        if isinstance(t, list):
+            if len(t) > 0:
                 self.add_rows( t, type(t[0]) )
             return True
         return False
