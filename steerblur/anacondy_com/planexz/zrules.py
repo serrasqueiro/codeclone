@@ -7,6 +7,7 @@
 """
 
 from ztable.xdate import MsDate, MsTime
+from zlatin import simpler_list
 
 
 class ZRules():
@@ -32,13 +33,17 @@ class ZRules():
 
 
     def set_heading(self, str_list):
+        self.header = []
         if isinstance(str_list, list):
-            self.header = str_list
+            a_list = simpler_list(str_list)
             column_index = 0
-            for a in str_list:
+            for a in a_list:
+                self.header.append( norm_header(a) )
                 column_index += 1
                 if a not in self.header_hash:
                     self.header_hash[a] = column_index
+            return True
+        return False
 
 
     def dump(self):
@@ -107,6 +112,12 @@ def keys_from_str(s):
             if a == "":
                 return None
             res.append(a)
+    return res
+
+
+def norm_header(s):
+    assert isinstance(s, str)
+    res = s.replace(" ", "_").replace("@", "")
     return res
 
 

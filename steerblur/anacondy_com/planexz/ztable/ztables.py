@@ -6,6 +6,7 @@
   Compatibility: python 3.
 """
 
+import os
 from sys import stdout, stderr
 
 
@@ -20,7 +21,14 @@ class Tabular():
         assert name is None or (name is not None and opt_stream is not None)
 
 
-    def rewrite(self, encoding=None):
+    def rewrite(self, encoding=None, force=False):
+        self.content_size = -1
+        if os.name != "nt" and not force:
+            return False
+        return self._rewrite(encoding)
+
+
+    def _rewrite (self, encoding=None):
         if self._stream in (stdout, stderr):
             return False
         if self._stream is not None:
@@ -35,6 +43,7 @@ class Tabular():
         self._stream.write(data.encode(encoding))
         self.content_size = len(data)
         return True
+
 
 if __name__ == "__main__":
     print("Module, please import it!")
