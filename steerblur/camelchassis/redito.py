@@ -1,4 +1,4 @@
-# redito.py  (c)2018  Henrique Moreira (part of 'camelchassis')
+# redito.py  (c)2018, 2020  Henrique Moreira (part of 'camelchassis')
 
 """
   redito - Common functions to streams and files.
@@ -6,16 +6,21 @@
   Compatibility: python 3.
 """
 
+# pylint: disable=missing-docstring, invalid-name, unused-argument
+# pylint: disable=unidiomatic-typecheck, len-as-condition, no-else-return
+# pylint: disable=too-many-instance-attributes, chained-comparison, bad-indentation
+
 
 import sys
 import codecs
 
 
-#
-# test_redito()
 def test_redito (out, inArgs):
+  """
+  Main module test!
+  """
   def test_show (charmap):
-    assert type( charmap )==CharMap
+    assert isinstance(charmap, CharMap)
     s = "T\xe1bua on ch\xe3o em (C\xd4TE) C\xf4te Ivoir."
     for x in [0, 1]:
       t = charmap.simpler_ascii( s, x )
@@ -24,7 +29,6 @@ def test_redito (out, inArgs):
       assert isOk
     return 0
 
-  err = sys.stderr
   dosCR = ""
   args = inArgs
   doAny = True
@@ -63,17 +67,17 @@ class CharMap:
     # Hint: for Unicode Character Map, e.g. UCS2 value 0x201c,
     #       see https://unicodemap.org/details/0x201c/index.html
     self.otherLookup = [
-      (0xae,   "(R)", "&reg;", "Registered trademark", 0),
-      (0xab,   "<<", "&laquo;", "Angle quotation mark (left)", 1),
-      (0xbb,   ">>", "&raquo;", "Angle quotation mark (right)", 1),
-      (0xa0,   " ", "&nbsp;", "Non-breaking space", 2),
-      (0xb7,   "-", "&middot;", "Middle dot", 2),
-      (0x2013, "--", "&ndash;", "EN dash", 2),
-      (0x2014, "--", "&mdash;", "EM dash", 2),
-      (0x201c, '"', "&ldquo;", "Left double quotation mark", 2),  # kind of inverted open double-quotes
-      (0x201d, '"', "&rdquo;", "Right double quotation mark", 2),  # kind of inverted open double-quotes
-      (0x0, "", "", "", -1)
-      ]
+        (0xae,   "(R)", "&reg;", "Registered trademark", 0),
+        (0xab,   "<<", "&laquo;", "Angle quotation mark (left)", 1),
+        (0xbb,   ">>", "&raquo;", "Angle quotation mark (right)", 1),
+        (0xa0,   " ", "&nbsp;", "Non-breaking space", 2),
+        (0xb7,   "-", "&middot;", "Middle dot", 2),
+        (0x2013, "--", "&ndash;", "EN dash", 2),
+        (0x2014, "--", "&mdash;", "EM dash", 2),
+        (0x201c, '"', "&ldquo;", "Left double quotation mark", 2),  # inverted open double-quotes
+        (0x201d, '"', "&rdquo;", "Right double quotation mark", 2),  # inverted open double-quotes
+        (0x0, "", "", "", -1)
+        ]
     conv = ((0xc1, 'A', "A'"),  # A-acute
             (0xc9, 'E', "E'"),  # E-acute
             (0xcd, 'I', "I'"),  # I-acute
@@ -148,7 +152,7 @@ class CharMap:
 
   def simpler_ascii (self, data, altText=0):
     s = ""
-    if type( data )==str:
+    if isinstance(data, str):
       for c in data:
         i = ord( c )
         if i>=256:
@@ -160,21 +164,23 @@ class CharMap:
             chars = self.altSubst[ i ]
         s += chars
       return s
-    elif type( data )==list or type( data )==tuple:
+    elif isinstance(data, (list, tuple)):
       res = []
       for a in data:
         res.append( self.simpler_ascii( a, altText ) )
       return res
-    elif type( data )==dict:
+    elif isinstance(data, dict):
       res = []
       for k, val in data.items():
         s = self.simpler_ascii( val, altText )
         res.append( (k, s) )
       return res
+    elif isinstance(data, (int, float)):
+      s = data
     else:
       #print("simpler_ascii(): Unsupported type:", type( data ))
       assert False
-    return None
+    return s
 
 
   def find_other_lookup (self, asciiNum):
@@ -186,9 +192,6 @@ class CharMap:
     return None
 
 
-  pass
-
-
 #
 # CLASS BasicHist -- basic histogram
 #
@@ -196,9 +199,8 @@ class BasicHistogram:
   def __init__ (self, vMin=0, vMax=256):
     self.seen = []
     self.semiEmpty = []
-    for x in range(vMin, vMax+1):
+    for _ in range(vMin, vMax+1):
       self.seen.append( 0 )
-    pass
 
 
   def how_many (self, aChr):
@@ -270,7 +272,7 @@ class TextRed(BinStream):
 
 
   def get_filename (self):
-    return self.inFilename;
+    return self.inFilename
 
 
   def set_filename (self, filename):
@@ -321,8 +323,8 @@ class TextRed(BinStream):
       inName = self.inFilename
     isOk = True
     try:
-      f = open( inName, "rb" )
-    except:
+      f = open(inName, "rb")
+    except FileNotFoundError:
       isOk = False
     self.buf = ""
     if isOk:
@@ -342,7 +344,7 @@ class TextRed(BinStream):
         self.buf = f.read()
     if f:
       if type( self.buf )==bytes:
-        mayHaveBOM = len( self.buf )>=2
+        #mayHaveBOM = len(self.buf) >= 2
         hasBOM = self.set_from_octets( self.buf[ 0 ], self.buf[ 1 ] )
       else:
         hasBOM = False
@@ -401,7 +403,7 @@ class TextRed(BinStream):
         s += "?"
       else:
         col += 1
-        if c<127 or self.skipNonASCII7bit==False:
+        if c<127 or not self.skipNonASCII7bit:
           s += chr( c )
         else:
           if self.convertToLatin1 and c<256:
@@ -448,9 +450,6 @@ class TextRed(BinStream):
     return isOk
 
 
-  pass
-
-
 #
 # CLASS BareText
 #
@@ -462,12 +461,9 @@ class BareText(TextRed):
   def to_str (self):
     isDOS = "DOS_CR" if self.numCR==len( self.lines ) else "NL"
     sProp2 = isDOS + ";" + self.inEncoding + ";" + "nonASCII=" + str(len( self.nonASCII7 ))
-    sProp = "lines="+str(len ( self.lines )) + ";" + self.extension[0]+":"+str( self.extension[1] ) + ";" + sProp2
+    sProp = "lines=" + str(len(self.lines)) + ";" + self.extension[0] + ":" + str(self.extension[1]) + ";" + sProp2
     s = self.inFilename + "\n" + sProp
     return s
-
-
-  pass
 
 
 #
@@ -482,14 +478,13 @@ class WildStr:
     self.right = ""
     if type( aStr )==str:
       self.init_wild_str( aStr, [self.wild] )
-    pass
 
 
   def clear (self):
     self.s = ""
     self.left = ""
     self.middle = ""
-    self.right
+    self.right = ""
 
 
   def init_wild_str (self, aStr, wildList):
@@ -552,7 +547,5 @@ xCharMap = CharMap()
 # Test suite
 #
 if __name__ == "__main__":
-  args = sys.argv[ 1: ]
-  code = test_redito( sys.stdout, args )
-  sys.exit( code )
-
+  CODE = test_redito(sys.stdout, sys.argv[1:])
+  sys.exit(CODE)
