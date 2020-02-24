@@ -38,7 +38,8 @@ class ZRules():
             a_list = simpler_list(str_list)
             column_index = 0
             for a in a_list:
-                self.header.append( norm_header(a) )
+                head_column = norm_header(a)
+                self.header.append(head_column)
                 column_index += 1
                 if a not in self.header_hash:
                     self.header_hash[a] = column_index
@@ -116,8 +117,12 @@ def keys_from_str(s):
 
 
 def norm_header(s):
-    assert isinstance(s, str)
-    res = s.replace(" ", "_").replace("@", "")
+    if isinstance(s, str):
+        res = s.replace(" ", "_").replace("@", "")
+    elif isinstance(s, (int, float)):
+        res = norm_header(str(s))
+    else:
+        assert False
     return res
 
 
