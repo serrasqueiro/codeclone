@@ -9,23 +9,41 @@
 
 import zipfile
 from xml.etree.ElementTree import iterparse
+from redito import xCharMap
 
 
-#
-# CLASS ZTable()
-#
-class ZTable:
-    def __init__ (self, t=[]):
+class ZRefs():
+    def init_zrefs(self):
+        self.str_ref = dict()
+
+
+    def _add_ref(self, s_simpler, s_original):
+        if s_simpler in self.str_ref:
+            self.str_ref[s_simpler].append(s_original)
+        else:
+            self.str_ref[s_simpler] = s_original
+
+
+class ZTable(ZRefs):
+    """
+    Class ZTable -- xcel tables
+    """
+    def __init__(self, t=[], strict_charset=None):
         self.cols_hist = {}
         self.minCol = None
         self.maxCol = None
         self.numCols = None
         self.cont = []
-        isOk = self._init_ztable( t )
+        self.strict_ch = strict_charset
+        assert strict_charset in (None,
+                                  "latin-like",
+                                  )
+        self.init_zrefs()
+        isOk = self._init_ztable(t)
         assert isOk
 
 
-    def _init_ztable (self, t):
+    def _init_ztable(self, t):
         if isinstance(t, list):
             if len(t) > 0:
                 self.add_rows( t, type(t[0]) )
@@ -33,7 +51,7 @@ class ZTable:
         return False
 
 
-    def add_rows (self, t, aType=dict):
+    def add_rows(self, t, aType=dict):
         if aType==dict:
             for row in t:
                 k = ';'.join( row.keys() ).split( ";" )
@@ -67,7 +85,8 @@ class ZTable:
                 for k, val in row.items():
                     colVal = column_number( k )
                     #print("::: colVal", colVal, "For column_number:", k, "nCol=", nCol, "maxCol=", self.maxCol)
-                    s = self.best_cell( val.strip() )
+                    a_val = self._normal_s_value(val)
+                    s = self.best_cell(a_val)
                     r[ colVal - 1 ] = s
                 self.cont.append( r )
         else:
@@ -75,10 +94,10 @@ class ZTable:
         return True
 
 
-    def best_cell (self, s):
+    def best_cell(self, s):
         try:
             f = float( s )
-        except:
+        except ValueError:
             f = None
         if f:
             v = f
@@ -87,26 +106,26 @@ class ZTable:
         return v
 
 
-    def textual (self, s, decPlaces=None):
+    def textual(self, s, decPlaces=None):
         if decPlaces is None:
             decPlaces = 9
-        if type( s )==str:
+        if isinstance(s, str):
             a = s
-        elif type( s )==float:
+        elif isinstance(s, float):
             a = friendly_float( s, decPlaces )
-        elif type( s )==int:
-            a = str( s )
+        elif isinstance(s, int):
+            a = str(s)
         else:
-            a = "({})={}".format( type(s), s )
+            a = "({})={}".format(type(s), s)
         return a
 
 
-    def chr_separated (self, entry, sep=";"):
+    def chr_separated(self, entry, sep=";"):
         if sep is None:
             return entry
         s = ""
         idx = 0
-        if type( entry )==list or type( entry )==tuple:
+        if isinstance(entry, (list, tuple)):
             for a in entry:
                 idx += 1
                 if idx>1:
@@ -115,16 +134,16 @@ class ZTable:
         return s
 
 
-    def alt_chr_separated (self, entry, adapt, sep=";"):
+    def alt_chr_separated(self, entry, adapt, sep=";"):
         tryBlanks = True
         if sep is None:
             return self.chr_separated(entry, None)
         s = ""
         idx = 0
-        if type( entry )==list or type( entry )==tuple:
+        if isinstance(entry, (list, tuple)):
             faceToAll = adapt.get( "*" )
             if faceToAll is not None:
-                assert type( faceToAll )==dict
+                assert isinstance(faceToAll, dict)
             for a in entry:
                 idx += 1
                 if idx>1:
@@ -152,6 +171,19 @@ class ZTable:
                                     break
                 s += aText
         return s
+
+
+    def _normal_s_value(self, s):
+        if isinstance(s, str):
+            if self.strict_ch is not None:
+                res = xCharMap.simpler_ascii(s)
+                if res != s:
+                    self._add_ref(res, s)
+            else:
+                res = s
+        else:
+            res = s
+        return res
 
 
 #
@@ -247,11 +279,9 @@ def column_number (letter):
     return v
 
 
-#
-# num_to_column_letters()
-#
-def num_to_column_letters (n):
-    assert type( n )==int
+def num_to_column_letters(n):
+    """ num_to_column_letters() -- A1, Z23, ... """
+    assert isinstance(n, int)
     assert n>0 and n<=9999
     s = ""
     while n > 0:
@@ -264,10 +294,8 @@ def num_to_column_letters (n):
     return s
 
 
-#
-# friendly_float()
-#
 def friendly_float (s, decPlaces, trimRight=True):
+    """ friendly_float() -- float to string """
     prc = "{:."+str(decPlaces)+"f}"
     a = prc.format( s )
     if trimRight:
@@ -276,11 +304,9 @@ def friendly_float (s, decPlaces, trimRight=True):
     return a
 
 
-#
-# cut_excess()
-#
 def cut_excess (s, cutWhat=(("  ", " "), ("\t", " "))):
-    if type( s )==str:
+    """ cut_excess() -- remove excessive blanks """
+    if isinstance(s, str):
         q = s
         for this, by in cutWhat:
             if this=="" or this==by: break
@@ -297,26 +323,23 @@ def cut_excess (s, cutWhat=(("  ", " "), ("\t", " "))):
     return res
 
 
-#
-# expand_adapt()
-#
 def expand_adapt (d):
+    """ expand_adapt() """
     def basic_rules (rule, there=None):
-        assert type(rule)==dict
+        assert isinstance(rule, dict)
         r = dict()
         if there is None:
             for k, val in rule.items():
-                assert type( val )==tuple
+                assert isinstance(val, tuple)
                 r[ k ] = list( val )
         else:
-            assert type(there)==dict
+            assert isinstance(there, dict)
             # there is e.g. '{"replace", tuple("a","b")}'
             for k, tup in rule.items():
-                val = list( tup )
+                val = list(tup)
                 there[ k ] += val
         return r
-
-    assert type(d)==dict
+    assert isinstance(d, dict)
     count = 0
     toDel = []
     copy = dict()
