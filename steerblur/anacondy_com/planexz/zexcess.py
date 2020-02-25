@@ -9,6 +9,7 @@
 
 import zipfile
 from xml.etree.ElementTree import iterparse
+from ztable.textual import trim_text
 from redito import xCharMap
 
 
@@ -304,23 +305,9 @@ def friendly_float (s, decPlaces, trimRight=True):
     return a
 
 
-def cut_excess (s, cutWhat=(("  ", " "), ("\t", " "))):
+def cut_excess (s):
     """ cut_excess() -- remove excessive blanks """
-    if isinstance(s, str):
-        q = s
-        for this, by in cutWhat:
-            if this=="" or this==by: break
-            count = 10**4
-            while count>0:
-                count -= 1
-                r = q.replace( this, by )
-                if q==r: break
-                q = r
-            assert count>0
-        res = q
-    else:
-        assert False
-    return res
+    return trim_text(s)
 
 
 def expand_adapt (d):
