@@ -65,10 +65,13 @@ def cell_string(cell, d, default_s="", debug=0):
             s = default_s
     elif d == "time":
         mTime = MsTime(cell)
+        s_time = str(mTime)
+        if len(s_time) == 4 and s_time[-3] == ":":
+            s_time = "0" + s_time
         if debug > 0:
-            s = "{}='{}'".format(mTime, cell)
+            s = "{}='{}'".format(s_time, cell)
         else:
-            s = str(mTime)
+            s = s_time
     elif d == "float":
         if cell == "":
             s = default_s
