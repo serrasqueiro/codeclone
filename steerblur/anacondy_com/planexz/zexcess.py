@@ -6,6 +6,7 @@
   Compatibility: python 3.
 """
 
+# pylint: disable=missing-function-docstring, line-too-long, invalid-name
 
 import zipfile
 from xml.etree.ElementTree import iterparse
@@ -14,6 +15,9 @@ from redito import xCharMap
 
 
 class ZRefs():
+    """
+    ZRefs (abstract) class
+    """
     def init_zrefs(self):
         self.str_ref = dict()
 
@@ -29,7 +33,7 @@ class ZTable(ZRefs):
     """
     Class ZTable -- xcel tables
     """
-    def __init__(self, t=[], strict_charset=None):
+    def __init__(self, t=None, strict_charset=None):
         self.cols_hist = {}
         self.minCol = None
         self.maxCol = None
@@ -45,19 +49,21 @@ class ZTable(ZRefs):
 
 
     def _init_ztable(self, t):
+        if t is None:
+            return True
         if isinstance(t, list):
             if len(t) > 0:
-                self.add_rows( t, type(t[0]) )
+                self.add_rows(t, type(t[0]))
             return True
         return False
 
 
     def add_rows(self, t, aType=dict):
-        if aType==dict:
+        if aType == dict:
             for row in t:
                 k = ';'.join( row.keys() ).split( ";" )
                 k.sort()
-                if len( k )<=0:
+                if len(k) <= 0:
                     continue
                 last = k[ -1 ]
                 s = ';'.join( k )
@@ -129,7 +135,7 @@ class ZTable(ZRefs):
         if isinstance(entry, (list, tuple)):
             for a in entry:
                 idx += 1
-                if idx>1:
+                if idx > 1:
                     s += sep
                 s += self.textual( a )
         return s
@@ -147,27 +153,29 @@ class ZTable(ZRefs):
                 assert isinstance(faceToAll, dict)
             for a in entry:
                 idx += 1
-                if idx>1:
+                if idx > 1:
                     s += sep
                 letra = num_to_column_letters(idx)
                 aText = self.textual( a )
                 face = adapt.get( letra )
                 if face is not None or faceToAll is not None:
-                    if face is None: face = faceToAll
+                    if face is None:
+                        face = faceToAll
                 if face is not None:
                     repl = face.get( "replace" )
                     if repl is not None:
-                        for a, b in repl:
+                        for r, b in repl:
                             for tryReplace in ("normal", "strip" if tryBlanks else ""):
-                                if tryReplace=="": break
-                                assert a!=b
-                                assert a!=""
-                                if tryReplace=="strip":
-                                    aStr = cut_excess( aText )
+                                if tryReplace == "":
+                                    break
+                                assert r != b
+                                assert r != ""
+                                if tryReplace == "strip":
+                                    aStr = trim_text(aText)
                                 else:
                                     aStr = aText
-                                q = aStr.replace(a, b)
-                                if q!=aText:
+                                q = aStr.replace(r, b)
+                                if q != aText:
                                     aText = q
                                     break
                 s += aText
@@ -187,11 +195,11 @@ class ZTable(ZRefs):
         return res
 
 
-#
-# ZSheets
-#
 class ZSheets():
-    def __init__ (self, filename=None, sheets=[]):
+    """
+    ZSheets class -- xcel sheet(s)
+    """
+    def __init__ (self, filename=None, sheets=None):
         self.filename = filename
         if filename:
             tup = self.xlx_read( filename, sheets)
@@ -204,28 +212,33 @@ class ZSheets():
         return self.sheets, self.cont
 
 
-    def xlx_read (self, filename, sheets=[], debug=0):
+    def xlx_read (self, filename, sheets=None, debug=0):
         z = zipfile.ZipFile( filename )
+        sheet_list = sheets if sheets is not None else []
         try:
-            strings = [el.text for e, el in iterparse(z.open('xl/sharedStrings.xml')) if el.tag.endswith('}t')]
-        except:
+            stream = z.open('xl/sharedStrings.xml')
+        except FileNotFoundError:
+            stream = None
+        if stream is None:
             strings = []
+        else:
+            strings = [el.text for e, el in iterparse(stream) if el.tag.endswith('}t')]
         wSheets = []
         #worksheetName = "xl/worksheets/sheet1.xml"
-        if len( sheets )<=0:
+        if len(sheet_list) <= 0:
             iList = z.infolist()
             for zInfo in iList:
                 fName = zInfo.filename
                 for wDir in ["xl/worksheets/"]:
                     if fName.startswith( wDir ) and fName.endswith( ".xml" ):
                         wsName = fName[ len( wDir ):-4 ]
-                        sheets.append( wsName )
+                        sheet_list.append( wsName )
         k = 0
-        for w in sheets:
+        for w in sheet_list:
             k += 1
             worksheetName = "xl/worksheets/" + w + ".xml"
-            sheetTag = "Sheet{}".format( k )    # TODO: use real xcel sheet name
-            if debug>0:
+            sheetTag = "Sheet{}".format(k)    # TODO: use real xcel sheet name
+            if debug > 0:
                 print("Debug: {}, '{}'".format( sheetTag, w ))
             wSheet = (w, worksheetName, sheetTag)
             wSheets.append( wSheet )
@@ -240,9 +253,9 @@ class ZSheets():
         rows = []
         row = {}
         value = ""
-        if debug>0:
+        if debug > 0:
             print("Debug: xlx_read_sheet() '{}'".format( worksheetName ))
-        for e, el in iterparse( z.open( worksheetName ) ):
+        for _, el in iterparse( z.open( worksheetName ) ):
             if el.tag.endswith('}v'): # <v>84</v>
                 value = el.text
             if el.tag.endswith('}c'): # <c r="A3" t="s"><v>84</v></c>
@@ -262,35 +275,41 @@ class ZSheets():
         return rows
 
 
-#
-# column_number()
-#
 def column_number (letter):
-    assert len( letter )>0
+    """
+    Column number, from letter
+    :param letter: input letter
+    :return: the column number
+    """
+    assert len(letter) > 0
     v = 0
-    if len( letter )==1:
-        isOk = letter>='A' and letter<='Z'
-        assert isOk
-        v = ord( letter ) - ord( 'A' ) + 1
+    if len(letter) == 1:
+        if letter.isupper():
+            v = ord(letter) - ord('A') + 1
+        else:
+            v = -1
     else:
         for c in letter:
             v *= 26
-            isOk = c>='A' and c<='Z'
-            v += ord( c ) - ord( 'A' ) + 1
+            if not c.isupper():
+                v = -1
+                break
+            v += ord(c) - ord('A') + 1
+    assert v >= 0
     return v
 
 
 def num_to_column_letters(n):
     """ num_to_column_letters() -- A1, Z23, ... """
     assert isinstance(n, int)
-    assert n>0 and n<=9999
+    assert 0 < n <= 9999
     s = ""
     while n > 0:
         n -= 1
         v = n % 26
         s = chr( ord('A')+v ) + s
         n //= 26
-        if n<=0:
+        if n <= 0:
             break
     return s
 
@@ -300,7 +319,7 @@ def friendly_float (s, decPlaces, trimRight=True):
     prc = "{:."+str(decPlaces)+"f}"
     a = prc.format( s )
     if trimRight:
-        if a.find(".")!=-1:
+        if a.find(".") != -1:
             a = a.rstrip("0").rstrip(".")
     return a
 
@@ -336,7 +355,7 @@ def expand_adapt (d):
         val = d[ k ]
         count += 10
         cols = k.split(";")
-        if len( cols )>1:
+        if len(cols) > 1:
             toDel.append( k )
             for c in cols:
                 count += 1

@@ -6,6 +6,8 @@
   Compatibility: python 3.
 """
 
+# pylint: disable=missing-function-docstring
+
 from ztable.xdate import MsDate, MsTime
 from zlatin import simpler_list
 
