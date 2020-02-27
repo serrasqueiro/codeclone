@@ -20,8 +20,17 @@ run_useful ()
 #
 # Main script
 #
-if [ "$*" = "" ]; then
-	echo "Enter '.' alone to quit..."
-fi
-run_useful $*
-
+case $1 in
+	.)
+		echo "Enter '.' alone to quit..."
+		shift
+		run_useful $*
+		;;
+	office)
+		shift
+		grep -E "\.docx|\.xlsx" $*
+		exit $?
+		;;
+	*)
+		run_useful $*
+esac
