@@ -7,7 +7,9 @@ Module for stock namings/ abbreviations/ weights.
 # pylint: disable=missing-docstring
 
 
+import sindexes.weight_stocks
 from sindexes.weight_stocks import STK_W_PSI20
+from sindexes.isin import ISIN
 
 
 def run_main(args):
@@ -19,6 +21,11 @@ def run_main(args):
                 )
     for name, lines in stk_pair:
         sw = StockWeight(name, lines)
+        sr = RefISIN()
+        invalids = sr.add_ISIN_refs(sindexes.weight_stocks.STK_ISIN_PSI20)
+        if invalids != []:
+            print("Invalid ISIN (#{} invalid): {}".format(len(invalids), invalids))
+            assert False
         if nicks is None or name in nicks:
             idx, f_sum = 0, 0.0
             for abbrev, weight in sw.abbreviations():
@@ -27,7 +34,36 @@ def run_main(args):
                       "".format(idx, name, weight, abbrev, sw.full_name(abbrev)))
                 f_sum += weight
             print("Total weight (100%) = {:.3f}".format(f_sum))
+            for abbrev, _ in sw.abbreviations():
+                name = sw.full_name(abbrev)
+                print("ISIN={}, {}".format(sr.ref_isin.get(name), name))
     return 0
+
+
+
+class RefISIN():
+    def __init__(self):
+        self.ref_isin = dict()
+
+
+    def add_ISIN_refs(self, tups):
+        """
+        Add a list/ tuples of pairs (name, ISIN) into the 'ref_isin' dictionary.
+        :param tups: list
+        :return: list, invalid ISIN
+        """
+        invalids = []
+        if not isinstance(tups, (list, tuple)):
+            return None
+        for q, i in tups:
+            assert isinstance(q, str)
+            assert isinstance(i, str)
+            if q not in self.ref_isin:
+                self.ref_isin[q] = i
+                isin = ISIN(i)
+                if not isin.is_valid():
+                    invalids.append((q, i))
+        return invalids
 
 
 class StockWeight():

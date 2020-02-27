@@ -11,29 +11,33 @@ from lxml import etree
 # http://lxml.de/tutorial.html
 
 
-#
-# main_rsread()
-#
 def main_rsread (outFile, errFile, inArgs):
+    """
+    Main RSS reader
+    :param outFile:
+    :param errFile:
+    :param inArgs:
+    :return:
+    """
     code = None
     debug = 0
     verbose = 0
     return code
 
 
-#
-# CLASS TextContent
-#
 class TextContent:
+    """
+    TextContent class
+    """
     def init_textcontent (self):
         self.content = []
         self.originalInput = []
 
 
-#
-# CLASS RssEcho
-#
 class RssEcho(TextContent):
+    """
+    Echoing RSS class
+    """
     def __init__ (self):
         self.init_textcontent()
         self.seq = []
@@ -69,18 +73,18 @@ class RssEcho(TextContent):
         return newDate
 
 
-#
-# CLASS HumanDate
-#
 class HumanDate:
+    """
+    HumanDate class, ToDo
+    """
     def init_humandate (self):
         self.s = ""
 
 
-#
-# CLASS RssDate
-#
 class RssDate(HumanDate):
+    """
+    RSS Date class
+    """
     def __init__ (self, s):
         self.init_humandate()
         self.dttm = self.try_rss_date( s )
@@ -114,24 +118,18 @@ class RssDate(HumanDate):
 
 
 #
-# Globals
-#
-
-
-#
 # Main script
 #
 if __name__ == "__main__":
     import sys
-    code = main_rsread( sys.stdout, sys.stderr, sys.argv[ 1: ] )
-    if code is None:
+    CODE = main_rsread( sys.stdout, sys.stderr, sys.argv[ 1: ] )
+    if CODE is None:
         print("""
 rsread.py Command [options]
 
 Commands are:
    dump rss-file [rss-file ...]
 """)
-        code = 0
-    assert type( code )==int
-    assert code<=127
-    sys.exit( code )
+        CODE = 0
+    assert isinstance(CODE, int)
+    sys.exit(CODE)
