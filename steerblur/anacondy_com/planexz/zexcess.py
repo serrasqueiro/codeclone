@@ -26,7 +26,7 @@ class ZRefs():
         if s_simpler in self.str_ref:
             self.str_ref[s_simpler].append(s_original)
         else:
-            self.str_ref[s_simpler] = s_original
+            self.str_ref[s_simpler] = [s_original]
 
 
 class ZTable(ZRefs):
