@@ -6,7 +6,7 @@
   Compatibility: python 3.
 """
 
-# pylint: disable=missing-function-docstring, line-too-long, invalid-name
+# pylint: disable=missing-function-docstring, line-too-long, invalid-name, no-self-use
 
 import zipfile
 from xml.etree.ElementTree import iterparse
@@ -201,6 +201,7 @@ class ZSheets():
     """
     def __init__ (self, filename=None, sheets=None):
         self.filename = filename
+        self._sheet_wb_list, self._sheet_wb_dict = None, dict()
         if filename:
             tup = self.xlx_read( filename, sheets)
         else:
@@ -223,6 +224,7 @@ class ZSheets():
             strings = []
         else:
             strings = [el.text for e, el in iterparse(stream) if el.tag.endswith('}t')]
+        self._get_workbook_list(z)
         wSheets = []
         #worksheetName = "xl/worksheets/sheet1.xml"
         if len(sheet_list) <= 0:
@@ -230,28 +232,28 @@ class ZSheets():
             for zInfo in iList:
                 fName = zInfo.filename
                 for wDir in ["xl/worksheets/"]:
-                    if fName.startswith( wDir ) and fName.endswith( ".xml" ):
+                    if fName.startswith( wDir ) and fName.endswith(".xml"):
                         wsName = fName[ len( wDir ):-4 ]
                         sheet_list.append( wsName )
-        k = 0
         for w in sheet_list:
-            k += 1
-            worksheetName = "xl/worksheets/" + w + ".xml"
-            sheetTag = "Sheet{}".format(k)    # TODO: use real xcel sheet name
-            if debug > 0:
-                print("Debug: {}, '{}'".format( sheetTag, w ))
-            wSheet = (w, worksheetName, sheetTag)
-            wSheets.append( wSheet )
+            sheet_file = self._sheet_wb_dict.get(w)
+            if sheet_file is None:
+                sheet_file = w
+                sheet_tag = w
+            else:
+                sheet_tag = sheet_file
+            worksheet_filename = "xl/worksheets/" + sheet_file + ".xml"
+            wSheets.append( (w, worksheet_filename, sheet_tag) )
 
         sh = []
-        for tup in wSheets:
-            sh.append( self.xlx_read_sheet( z, strings, tup[ 1 ] ) )
+        for _, worksheet_filename, _ in wSheets:
+            sh.append( self.xlx_read_sheet(z, strings, worksheet_filename) )
         return (wSheets, sh)
 
 
     def xlx_read_sheet (self, z, strings, worksheetName, debug=0):
         rows = []
-        row = {}
+        row = dict()
         value = ""
         if debug > 0:
             print("Debug: xlx_read_sheet() '{}'".format( worksheetName ))
@@ -271,8 +273,36 @@ class ZSheets():
                 value = ''
             if el.tag.endswith('}row'):
                 rows.append(row)
-                row = {}
+                row = dict()
         return rows
+
+
+    def _get_workbook_list(self, z):
+        if "xl/workbook.xml" not in z.NameToInfo:
+            return None
+        name_seq = []
+        with z.open('xl/workbook.xml') as wb:
+            itp = iterparse(wb)
+            wb_list = [el.attrib for e, el in itp if el.tag.endswith('}sheet')]
+        # wb_list[0]["name"], wb_list[0]["sheetId"], wb_list[0]["{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"]
+        self._sheet_wb_list = []
+        idx = 0
+        for d_sheet in wb_list:
+            idx += 1
+            sheet_ref = "sheet{}".format(idx)
+            xml_id = []
+            for key, val in d_sheet.items():
+                if key.endswith("}id"):
+                    assert xml_id == []
+                    simpler_key = key.split("{")[1].split("}")[-1]
+                    assert simpler_key.startswith("id")
+                    xml_id.append( (simpler_key, val, ("complete-sheet-ref", key)) )
+            sheet_name = d_sheet["name"]
+            name_seq.append(sheet_name)
+            self._sheet_wb_list.append( (sheet_name, d_sheet["sheetId"], xml_id) )
+            self._sheet_wb_dict[sheet_name] = sheet_ref
+        self._sheet_wb_dict["@sheets"] = name_seq
+        return name_seq
 
 
 def column_number (letter):
