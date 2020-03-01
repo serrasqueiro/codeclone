@@ -37,6 +37,8 @@ def run_tests(out_file, in_args):
         cols = xs.get_column_names()
         hdr = xs.get_header_numbers()
         print("idx={}, title={}, {}; header: {}, columns: {}".format(idx, title, sheet, hdr, cols))
+        print("get_header_columns(): {}, get_header_column_names(): {}".format(xs.get_header_columns(), xs.get_header_column_names()))
+        print("get_bold_headers(): {}".format(xs.get_bold_headers()))
         if sheet is None:
             return 1
         ir = sheet.iter_rows()
