@@ -6,39 +6,44 @@
   Compatibility: python 3.
 """
 
+# pylint: disable=import-error, invalid-name
+
 from sys import stdout, argv
 from ytables import XcelTable
+from ysheet import XcelSheet
 
 
-def run_tests(out_file, inArgs):
+def run_tests(out_file, in_args):
     """
     Basic tests for this module
     :param out_file: output stream
     :param inArgs: system args.
     :return: void
     """
-    if inArgs == []:
+    assert out_file is not None
+    if in_args == []:
         args = ["a.xlsx"]
     else:
-        args = inArgs
+        args = in_args
     filename = args[0]
     param = args[1:]
-    nums, idx = [], 0
-    for name in param:
-        idx += 1
-        print("#{}\t{} . {}".format(idx, filename, name))
-        nums.append(idx)
     xt = XcelTable(filename, param)
-    if nums == []:
-        nums = [1]
-    for idx in nums:
-        sheet = xt.content(idx)
-        print("idx:", idx, sheet)
+    names = xt.get_sheet_names()
+    idx = 0
+    for title in names:
+        idx += 1
+        sheet = xt.content(title)
+        xs = XcelSheet(sheet, title)
+        cols = xs.get_column_names()
+        hdr = xs.get_header_numbers()
+        print("idx={}, title={}, {}; header: {}, columns: {}".format(idx, title, sheet, hdr, cols))
         if sheet is None:
             return 1
         ir = sheet.iter_rows()
+        y = 0
         for row in ir:
-            print(row)
+            y += 1
+            print("row#{}".format(y), row)
         print("---")
     return 0
 
