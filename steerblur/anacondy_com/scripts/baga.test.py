@@ -6,26 +6,41 @@
   Compatibility: python 3.
 """
 
-from baga import MediaFile
+# pylint: disable=invalid-name, pointless-string-statement
+
 import commands
+from baga import MediaFile
 
 
-#
-# main_baga_test()
-#
 def main_baga_test(outFile, errFile, inArgs):
-    code = None
-    if inArgs==[]:
+    """
+    Main tests for module baga
+    :param outFile: output stream
+    :param errFile: error stream
+    :param inArgs: system args
+    :return: int, error-code
+    """
+    if inArgs == []:
         args = ["a"]
+    else:
+        args = inArgs
     cmd = args[0]
     param = args[1:]
-    if cmd=="a":
+    if cmd == "a":
         code = run_test_a(outFile, errFile, param)
+    else:
+        code = None
     return code
 
+
 def run_test_a(outFile, errFile, param):
-    listed = ("G:/media/new_WAV/Tears For Fears - The Seeds Of Love {1999} [FLAC]/01 - Woman In Chains.flac",
-              )
+    """
+    Run test 'a'
+    :return: 0
+    """
+    assert outFile is not None
+    assert errFile is not None
+    listed = param
     for name in listed:
         p = commands.safe_name(name)
         print(p)

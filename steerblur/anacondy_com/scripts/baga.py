@@ -6,28 +6,16 @@
   Compatibility: python 3.
 """
 
-from tinytag import TinyTag
+# pylint: disable=invalid-name
+
 import os.path
+from tinytag import TinyTag
 
 
-#
-# main_baga()
-#
-def main_baga(outFile, errFile, inArgs):
-    """
-    Main function.
-    :param outFile: output file
-    :param errFile: error file
-    :param inArgs: parameters
-    :return: an error-code
-    """
-    return 0
-
-
-#
-# CLASS MediaFile
-#
 class MediaFile():
+    """
+    MediaFile class
+    """
     def __init__(self, p=None):
         self.path = p
         self.size = -1
@@ -37,26 +25,34 @@ class MediaFile():
             self._read_tags(p)
 
 
-    def _read_tags(self, p, debug=1):
+    def _read_tags(self, p, debug=0):
         size = os.path.getsize(p)
         with open(p, "rb") as handler:
             self.tiny = TinyTag(p, size).get(p)
             self.handler = handler
-        if debug>0:
+        if debug > 0:
             print("read_tags({}), size={}".format(p, size))
         return 0
+
+
+    def path_name(self):
+        """
+        Returns the pathname
+        :return: string
+        """
+        return self.path
+
+
+    def path_exists(self):
+        """
+        Returns true if pathname exists
+        :return: bool
+        """
+        return os.path.isfile(self.path)
 
 
 #
 # Main script
 #
 if __name__ == "__main__":
-    import sys
-    CODE = main_baga(sys.stdout, sys.stderr, sys.argv[1:])
-    if CODE is None:
-        print("""
-baga
-""")
-        CODE = 0
-    assert isinstance(CODE, int)
-    assert CODE == 0
+    print("See baga.test.py for this module tests!")
