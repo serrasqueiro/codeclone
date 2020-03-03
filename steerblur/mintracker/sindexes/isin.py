@@ -46,10 +46,24 @@ class ISIN():
 
 
     def __str__(self):
-        is_ok = is_valid()
+        is_ok = self.is_valid()
         if is_ok:
             return self.isin_str
         return "-"
+
+
+def ISIN_checksum(s):
+    if s is None:
+        return None
+    assert isinstance(s, str)
+    if len(s) == 12:
+        x = s[:11] + "0"
+    elif len(s) == 11:
+        x = s + "0"
+    else:
+        return None
+    csum_str = str(_ISIN_checksum_digit(x))
+    return x[:11] + csum_str
 
 
 def _ISIN_checksum_digit(isin):
