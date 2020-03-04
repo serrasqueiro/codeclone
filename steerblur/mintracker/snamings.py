@@ -4,7 +4,7 @@ Module for stock namings/ abbreviations/ weights.
 (c)2020  Henrique Moreira (part of 'mintracker')
 """
 
-# pylint: disable=missing-docstring
+# pylint: disable=missing-docstring, invalid-name
 
 
 import sindexes.weight_stocks
@@ -110,6 +110,10 @@ class StockWeight():
 
     def abbreviations(self):
         return self._abbrevs
+
+
+    def abbrev_list(self):
+        return [s for s, weight in self._abbrevs]
 
 
     def full_name(self, abbrev):
