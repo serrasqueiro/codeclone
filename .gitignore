@@ -23,3 +23,5 @@ __pycache__
 # Backup files (e.g. from emacs)
 *.*~
 
+# PyCharm projects
+.idea
