@@ -1,8 +1,10 @@
-# dictplay.py  (c)2019  Henrique Moreira
-
 """
   dictplay: dictionary for my playlists
+
+  dictplay.py  (c)2019, 2020  Henrique Moreira
 """
+
+# pylint: disable=missing-docstring
 
 dict_MyPlaylists = {
     "k": "6895831904",
@@ -18,6 +20,8 @@ dict_MyPlaylists = {
     "blue": "7045636564",
     "criando2020": "7055103684",
     "tribute": "5987955924",
+    "nostalgia": "7326226044",
+    "a.upaupa": "6989894804",
     }
 
 # digital grid on operator 1:

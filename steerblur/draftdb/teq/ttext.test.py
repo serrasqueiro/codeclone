@@ -35,7 +35,8 @@ def run_main(args):
             tbl = tb.get_table(name)
             shown = [s.split("\t") for s in cont]
             print("{}: {} line(s)\n{}<<<".format(name, len(cont), flow_list(shown)))
-            print("Error msgs: {}\n...\n", tbl[3])
+            msgs = tbl[3]
+            print("Error msgs ({}): {}\n...\n".format(type(msgs), msgs))
     if code != 0:
         print("TESTS failed, code:", code)
     return code
