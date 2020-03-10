@@ -39,17 +39,17 @@ def any_of(s, tup):
     return -1
 
 
-def dict_order(dct, byName="a"):
+def dict_order(dct, by_name="a"):
     """
     Returns the keys and dictionary
     :param dct: dictionary
-    :param byName: "a": ascending, "z": descending
+    :param by_name: "a": ascending, "z": descending
     :return: keys, dictionary
     """
     do_revert = False
-    if byName == "z":
+    if by_name == "z":
         do_revert = True
-    elif byName == "a":
+    elif by_name == "a":
         pass
     else:
         assert False
