@@ -7,8 +7,11 @@ Module for textual TSV and related files
 # pylint: disable=missing-docstring
 
 import sys
+import util.strlist
+from util.strlist import expand_list
 from util.osindependent import TaPath
 from teq.ttext import TsvBase
+from redito import xCharMap
 
 
 def run_main(args):
@@ -17,6 +20,7 @@ def run_main(args):
     """
     code = 0
     param = args
+    notes = dict()
     for d in param:
         ta = TaPath(d)
         if not ta.ok_path():
@@ -30,15 +34,27 @@ def run_main(args):
         rel_names = tb.scan_tsv(ta.path)
         is_ok = tb.read_files(rel_names)
         print("tb.read_files(rel_names={}) returned {}".format(rel_names, is_ok))
+        print("Tables:")
+        print(expand_list(tb.names, "\t- ", 1))
+        print(expand_list(util.strlist.dict_order(tb.names, "z")[0], "\t=", post=" (reverse order)\n"))
         for name in tb.names:
             cont = tb.get_content(name)
             tbl = tb.get_table(name)
             shown = [s.split("\t") for s in cont]
-            print("{}: {} line(s)\n{}<<<".format(name, len(cont), flow_list(shown)))
+            flown = flow_list(shown)
+            try:
+                print("{}: {} line(s)\n{}<<<".format(name, len(cont), flown))
+            except UnicodeEncodeError:
+                notes[name] = flown
+                print("{}: {} line(s)\n{}<<<".format(name, len(cont), xCharMap.simpler_ascii(flown)))
             msgs = tbl[3]
             print("Error msgs ({}): {}\n...\n".format(type(msgs), msgs))
     if code != 0:
         print("TESTS failed, code:", code)
+    ks, _ = util.strlist.dict_order(notes)
+    if ks:
+        print("The following tables were shown simpler:\n{}"
+              "".format(expand_list(ks, "\t-")))
     return code
 
 
