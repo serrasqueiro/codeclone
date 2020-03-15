@@ -7,6 +7,7 @@ Module for textual TSV and related files
 # pylint: disable=missing-docstring, invalid-name, no-self-use, no-member
 
 from util.osindependent import TaPath, list_dir
+from util.strlist import dict_order
 
 class AnyBTable:
     """
@@ -42,6 +43,7 @@ class TsvBase(AnyBTable):
         self._default_encoding = "ISO-8859-1"
         self._processors = {"pre": dict(),
                             }
+        self._path_dict = dict()
         self._all = dict()
 
     def _process_read(self, f_in, ta, rel_name, debug=0):
@@ -109,6 +111,12 @@ class TsvBase(AnyBTable):
             else:
                 msg.append("{}:Line {}: empty".format(rel_name, idx))
 
+    def _add_path_info(self, d, sub_name):
+        if sub_name in self._path_dict:
+            self._path_dict[sub_name].append(d)
+        else:
+            self._path_dict[sub_name] = [d]
+
 
     def set_processor(self, rel_name, processor):
         self._processors["pre"][rel_name] = processor
@@ -146,7 +154,9 @@ class TsvBase(AnyBTable):
             for name in ls:
                 rel_name = name.lower()
                 if rel_name.endswith(self.ext):
-                    res.append(rel_name[:-len(self.ext)])
+                    sub_name = rel_name[:-len(self.ext)]
+                    res.append(sub_name)
+                    self._add_path_info(d, sub_name)
         return res
 
 
@@ -154,7 +164,13 @@ class TsvBase(AnyBTable):
         assert self.ext
         count_fail = 0
         for p in rel_paths:
-            ta = TaPath(p + self.ext)
+            sub_paths = self._path_dict[p]
+            sub_path = sub_paths[0]
+            if sub_path:
+                pre_name = sub_path + "/" + p
+            else:
+                pre_name = p
+            ta = TaPath(pre_name + self.ext)
             is_ok = ta.is_file()
             if debug > 0:
                 print("is_file({}): {}".format(ta, is_ok))
@@ -172,6 +188,20 @@ class TsvBase(AnyBTable):
 
     def get_content(self, rel_name):
         return self._get_content(rel_name)
+
+    def get_multiple_subnames(self):
+        """
+        Returns a list with pairs of ("sub_name", "path") for sub_names which are
+        'ambiguous'. I.e. more than one path.
+        :return: list
+        """
+        res = []
+        names, dct = dict_order(self._path_dict)
+        for sub_name in names:
+            path_list = dct[sub_name]
+            if len(path_list) > 1:
+                res.append((sub_name, path_list))
+        return res
 
 
 # Main script
