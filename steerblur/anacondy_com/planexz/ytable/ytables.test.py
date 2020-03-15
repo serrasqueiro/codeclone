@@ -9,8 +9,8 @@
 # pylint: disable=import-error, invalid-name
 
 from sys import stdout, argv
-from ytables import XcelTable
-from ysheet import XcelSheet
+from ytable.ytables import XcelTable
+from ytable.ysheet import XcelSheet
 
 
 def run_tests(out_file, in_args):
