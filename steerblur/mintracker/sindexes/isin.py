@@ -53,6 +53,11 @@ class ISIN():
 
 
 def ISIN_checksum(s):
+    """
+    Calculate checksum of ISIN string
+    :param s: string
+    :return: string, 12 chars
+    """
     if s is None:
         return None
     assert isinstance(s, str)
@@ -67,6 +72,11 @@ def ISIN_checksum(s):
 
 
 def _ISIN_checksum_digit(isin):
+    """
+    Internal checksum calculation for stock ISIN numbers
+    :param isin: string, 12 octets
+    :return: int, the checksum digit
+    """
     def digit_sum(n):
         return (n // 10) + (n % 10)
 
@@ -75,10 +85,10 @@ def _ISIN_checksum_digit(isin):
     all_uppercase = string.ascii_uppercase
     alphabet = {letter: value for (value, letter) in
                 enumerate(''.join(str(n) for n in range(10)) + all_uppercase)}
-    checksum_digit = abs(- sum(digit_sum(2 * int(c))
-                               if i % 2 == 1
-                               else int(c) for (i, c) in enumerate(
-        reversed(''.join(str(d) for d in (alphabet[v] for v in isin[:-1]))), 1)) % 10)
+    val = - sum(digit_sum(2 * int(c))
+                if i % 2 == 1
+                else int(c) for (i, c) in enumerate(reversed(''.join(str(d) for d in (alphabet[v] for v in isin[:-1]))), 1)) % 10
+    checksum_digit = abs(val)
     return checksum_digit
 
 

@@ -4,7 +4,7 @@ OS independent functions
 (c)2020  Henrique Moreira (part of 'draftdb', util)
 """
 
-# pylint: disable=missing-function-docstring, no-member
+# pylint: disable=missing-function-docstring, invalid-name, no-member
 
 
 import os

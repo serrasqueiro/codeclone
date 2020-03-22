@@ -193,6 +193,21 @@ class StockRefs():
         return True
 
 
+def comp_name_ok(s):
+    assert isinstance(s, str)
+
+    def valid_rest(s, valids):
+        for c in s:
+            ok = c.isalnum() or c in valids or c == ' '
+            if not ok:
+                return False
+        return True
+
+    VALIDS = (".", "-", ",")
+    is_ok = (s[0].upper() or s[0].isdigit()) and valid_rest(s[1:], VALIDS)
+    return is_ok
+
+
  #
 # Main script
 #
