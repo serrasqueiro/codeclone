@@ -6,11 +6,20 @@
   Compatibility: python 3.
 """
 
-# pylint: disable=import-error, invalid-name
+# pylint: disable=import-error, invalid-name, line-too-long
 
 from sys import stdout, argv
 from ytable.ytables import XcelTable
 from ytable.ysheet import XcelSheet
+
+
+def main():
+    """
+    Main test.
+    """
+    code = run_tests(stdout, argv[1:])
+    assert isinstance(code, int)
+    assert code == 0
 
 
 def run_tests(out_file, in_args):
@@ -27,9 +36,11 @@ def run_tests(out_file, in_args):
         args = in_args
     filename = args[0]
     param = args[1:]
+    print("Reading {}, params: {}".format(filename, param))
     xt = XcelTable(filename, param)
     names = xt.get_sheet_names()
     idx = 0
+    last = None
     for title in names:
         idx += 1
         sheet = xt.content(title)
@@ -45,11 +56,17 @@ def run_tests(out_file, in_args):
         y = 0
         for row in ir:
             y += 1
-            print("row#{}".format(y), row)
+            shown = row
+            last = (row, row[0] if row else "?")
+            print("row#{}, #cols={}".format(y, len(row)), shown)
         print("---")
+    if last is None:
+        return 2
+    row, elem = last[0], last[1]
+    print("Last row:", row)
+    print("Last row, 1st element ({}): {}".format(type(elem), elem))
     return 0
 
 
 if __name__ == "__main__":
-    CODE = run_tests(stdout, argv[1:])
-    assert isinstance(CODE, int) and CODE == 0
+    main()
