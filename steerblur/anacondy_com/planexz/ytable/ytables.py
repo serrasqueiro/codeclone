@@ -8,6 +8,7 @@
 
 # pylint: disable=import-error, protected-access
 
+import openpyxl.cell
 from openpyxl import load_workbook
 
 
@@ -90,6 +91,71 @@ class XcelTable():
         if sheet_ref in self._cache["names"]:
             return self._cache["names"][sheet_ref]
         return None
+
+
+class XCell():
+    """
+    Tabular/ text tables
+    """
+    _cell = None
+
+    def __init__ (self, cell=None):
+        self._cell = cell
+        assert isinstance(cell, (openpyxl.cell.cell.Cell, type(None)))
+
+
+    def get_font_str(self, back_newline=False):
+        return self.get_attr_str(self._cell.font, "font", back_newline)
+
+
+    def get_attr_str(self, a_var, a_type, back_newline):
+        assert isinstance(back_newline, bool)
+        xy = getattr(a_var, "__elements__", None)
+        if back_newline:
+            s = str(a_var)
+            shown = s.replace("\n", "\\n")
+        else:
+            shown = self.get_string_from_attr(a_var, a_type, xy)
+        return shown
+
+    def get_string_from_attr(self, a_var, a_type, xy):
+        assert isinstance(xy, (list, tuple))
+        alist = []
+        if xy is None:
+            return str(a_var)
+        if a_type == "font":
+            for att in xy:
+                shown = getattr(a_var, att)
+                if shown is None:
+                    continue
+                #if isinstance(shown, openpyxl.styles.colors.Color) ...
+                named_tag = getattr(shown, "tagname", None)
+                if named_tag == "color":
+                    pass
+                else:
+                    s = "{}={}".format(att, shown)
+                    alist.append(s)
+        else:
+            return str(a_var)
+        return ", ".join(alist)
+
+
+def get_non_empty(alist, what_if=None, exclude=None):
+    """
+    Return the list of non-empty elements (what_if="") or non-None elements
+    :param alist: input list
+    :param what_if: what not to return
+    :return: list
+    """
+    res = []
+    excl_list = [] if exclude is None else exclude
+    for x in alist:
+        if x == what_if:
+            continue
+        if isinstance(x, str) and x in excl_list:
+            continue
+        res.append(x)
+    return res
 
 
 if __name__ == "__main__":
