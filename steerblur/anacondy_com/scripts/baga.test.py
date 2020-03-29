@@ -8,7 +8,7 @@
 
 # pylint: disable=invalid-name, pointless-string-statement
 
-import commands
+from tconfig.commands import safe_name
 from baga import MediaFile
 
 
@@ -42,7 +42,7 @@ def run_test_a(outFile, errFile, param):
     assert errFile is not None
     listed = param
     for name in listed:
-        p = commands.safe_name(name)
+        p = safe_name(name)
         print(p)
         mf = MediaFile(p)
         assert mf is not None

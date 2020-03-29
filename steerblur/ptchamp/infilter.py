@@ -1,4 +1,4 @@
-# infilter.py  (c)2018  Henrique Moreira (part of 'ptchamp')
+# infilter.py  (c)2018, 2020  Henrique Moreira (part of 'ptchamp')
 
 """
   infilter - Input portuguese Football championship
@@ -7,8 +7,17 @@
 """
 
 
+import sys
 from redito import BareText
-from adate import ShortDate
+from tconfig.adate import ShortDate
+
+
+def main():
+  args = sys.argv[1:]
+  code = test_infilter(sys.stdout, args)
+  assert isinstance(code, int)
+  assert int(code) >= 0
+  sys.exit(code)
 
 
 #
@@ -93,8 +102,5 @@ class ZeroInputResults:
 # Test suite
 #
 if __name__ == "__main__":
-  import sys
-  args = sys.argv[ 1: ]
-  code = test_infilter( sys.stdout, args )
-  pass
+  main()
 
