@@ -9,7 +9,7 @@
 # pylint: disable=import-error, invalid-name, line-too-long
 
 from sys import stdout, argv
-from ytable.ytables import XcelTable
+from ytable.ytables import XcelTable, XCell, get_non_empty
 from ytable.ysheet import XcelSheet
 
 
@@ -39,6 +39,14 @@ def run_tests(out_file, in_args):
     print("Reading {}, params: {}".format(filename, param))
     xt = XcelTable(filename, param)
     names = xt.get_sheet_names()
+    no_show_list = ("fill",
+                    "protection",
+                    )
+    code = dump_xcel(xt, names, no_show_list)
+    return code
+
+
+def dump_xcel(xt, names, no_show_list):
     idx = 0
     last = None
     for title in names:
@@ -56,15 +64,26 @@ def run_tests(out_file, in_args):
         y = 0
         for row in ir:
             y += 1
-            shown = row
             last = (row, row[0] if row else "?")
+            shown = [x.value for x in row]
             print("row#{}, #cols={}".format(y, len(row)), shown)
         print("---")
     if last is None:
         return 2
     row, elem = last[0], last[1]
     print("Last row:", row)
-    print("Last row, 1st element ({}): {}".format(type(elem), elem))
+    print("Last row, 1st column (type is {}): {}\n".format(type(elem), elem))
+    attrs = get_non_empty([None if x.startswith("__") else x for x in dir(elem)], exclude=no_show_list)
+    cell = XCell(elem)
+    for x in attrs:
+        #shown = eval("elem." + x) ---> kind of insecure...! (preferred is 'getattr')
+        shown = getattr(elem, x)
+        if isinstance(shown, str):
+            shown = "'{}'".format(shown.replace("\n", "\\n"))
+        if x == "font":
+            print("attr font: {}\n".format(cell.get_font_str()))
+        else:
+            print("attr {}: {}\n".format(x, shown))
     return 0
 
 
