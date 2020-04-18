@@ -15,3 +15,4 @@ d
 last-one.
 
 
+###         files = ["c:/temp/_SOFA/IMG_20150925_081847.jpg", "c:/temp/_SOFA/SOFA_20150125_01.JPG"]

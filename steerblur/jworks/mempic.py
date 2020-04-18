@@ -6,21 +6,28 @@
   Compatibility: python 3.
 """
 
+# pylint: disable=missing-function-docstring, invalid-name
+
 from PIL import Image, ExifTags
 
-#
-# abstract CLASS RawPic
-#
+
 class RawPic:
-    def __init__ (self, imgBuf=None):
-        self.iBuf = imgBuf
-        self.meta = None
+    """ Abstract class RawPic """
+    _ibuf = None
+
+    def __init__ (self, img_buf=None):
+        self._ibuf = img_buf
 
 
-#
-# CLASS PicMem:
-#
+    def buffer(self):
+        return self._ibuf
+
+
 class PicMem(RawPic):
+    """ Picture Memory """
+    pict = None
+    meta = dict()
+
     def read (self, name):
         img = Image.open( name )
         self.pict = Pict( img )
@@ -31,7 +38,7 @@ class PicMem(RawPic):
                      "main": dict(),
                      "info": None,
                      }
-        self._base_parse( ex, self.meta )
+        self._base_parse(ex)
         return True
 
 
@@ -42,12 +49,12 @@ class PicMem(RawPic):
 
     def has_exif (self):
         sizeX, sizeY = self.meta["info"]["width"], self.meta["info"]["height"]
-        if sizeX==-1:
-            assert sizeY==-1
-        return sizeX>0
+        if sizeX == -1:
+            assert sizeY == -1
+        return sizeX > 0
 
 
-    def _base_parse (self, exifInfo, outMeta):
+    def _base_parse (self, exifInfo):
         if exifInfo is None:
             return False
         width, height = -1, -1
@@ -59,24 +66,26 @@ class PicMem(RawPic):
                 continue
             tagName = ExifTags.TAGS[key]
             xKey = tagName.lower()
-            if xKey.find("width")>=0:
+            if xKey.find("width") >= 0:
                 dMain["x"][tagName] = val
-                if xKey.startswith("exif"): width = int( val )
-            elif xKey.find("height")>=0:
+                if xKey.startswith("exif"):
+                    width = int( val )
+            elif xKey.find("height") >= 0:
                 dMain["y"][tagName] = val
-                if xKey.startswith("exif"): height = int(val)
+                if xKey.startswith("exif"):
+                    height = int(val)
         dInfo = {"width": width,
                  "height": height,
                  }
-        outMeta["main"] = dMain
-        outMeta["info"] = dInfo
+        self.meta["main"] = dMain
+        self.meta["info"] = dInfo
         return True
 
 
-#
-# CLASS Pict
-#
 class Pict():
+    """ Pict class, for pictures/ images """
+    img = None
+
     def __init__ (self, img=None):
         self.img = img
         self._parse_picture( img )
@@ -88,11 +97,10 @@ class Pict():
         :param img:
         :return: bool (whether image is correct)
         """
-        if img is None: return False
-        """
-        See also:
-		https://stackoverflow.com/questions/6444548/how-do-i-get-the-picture-size-with-pil
-        """
+        if img is None:
+            return False
+        #  See also:
+        #	https://stackoverflow.com/questions/6444548/how-do-i-get-the-picture-size-with-pil
         self.size = img.size  # size[0]=x, size[1]=y
         return True
 
