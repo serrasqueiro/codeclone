@@ -9,6 +9,51 @@
 # pylint: disable=missing-function-docstring, invalid-name
 
 from PIL import Image, ExifTags
+from jworks.edates import exif_date, exif_str_date
+
+
+class TagsExif():
+    """
+    TagsExif class -- has dual id to string and string to id
+    """
+    str_to = None
+    thisExifInfo = None
+    _exif_tags = None
+
+    def __init__(self):
+        self._exif_tags = ExifTags.TAGS
+        self.str_to = self._init_tags()
+
+    def get_index(self, s):
+        if isinstance(s, str):
+            i_val = self.str_to.get(s)
+        else:
+            assert False
+        if i_val is None:
+            return -1
+        assert isinstance(i_val, int)
+        return i_val
+
+    def get_info(self, idx):
+        assert isinstance(idx, int)
+        assert self.thisExifInfo is not None
+        return self.thisExifInfo[idx]
+
+    def what_date(self, keyName=""):
+        assert isinstance(keyName, str)
+        if keyName == "":
+            k = "DateTime"
+        else:
+            k = keyName
+        idx = self.get_index(k)
+        return self.get_info(idx)
+
+    def _init_tags(self):
+        dct = dict()
+        for i_val, s in self._exif_tags.items():
+            if s != "":
+                dct[s] = i_val
+        return dct
 
 
 class RawPic:
@@ -17,7 +62,6 @@ class RawPic:
 
     def __init__ (self, img_buf=None):
         self._ibuf = img_buf
-
 
     def buffer(self):
         return self._ibuf
@@ -74,8 +118,14 @@ class PicMem(RawPic):
                 dMain["y"][tagName] = val
                 if xKey.startswith("exif"):
                     height = int(val)
+        controlTagsExif.thisExifInfo = exifInfo
+        sDate = controlTagsExif.what_date("DateTime")
+        assert sDate is not None
+        dttm = exif_date(sDate)
         dInfo = {"width": width,
                  "height": height,
+                 "DateTime": dttm,
+                 "DateISO": exif_str_date(dttm, "ISO"),
                  }
         self.meta["main"] = dMain
         self.meta["info"] = dInfo
@@ -112,6 +162,8 @@ class Pict():
     def height (self):
         return self.size[1]
 
+
+controlTagsExif = TagsExif()
 
 #
 # No main...!
