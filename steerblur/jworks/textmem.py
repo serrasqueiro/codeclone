@@ -139,7 +139,7 @@ class TextMem(RawMem):
                 h += 1
                 countEmpty = 0
                 lastText = self.simpler_str( a )
-            tent = bm.string_decode( a )
+            tent, _ = bm.string_decode( a )
             if tent is None:
                 s = a
                 b64Tups = []
@@ -233,14 +233,20 @@ abcdefghijklmnopqrstuvwxyz
 
 
     def string_decode(self, s):
+        """
+        Returns the decoded bytes from input string 's', and an error string
+        :param s: input
+        :return: b, err (the error string)
+        """
+        b, err = None, None
         if isinstance(s, str):
             try:
                 b = b64decode(s)
-            except base64.binascii.Error:
-                b = None
+            except base64.binascii.Error as an_err:
+                err = an_err.args[0]
         else:
             assert False
-        return b
+        return (b, err)
 
 
 #
