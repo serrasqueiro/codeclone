@@ -21,6 +21,7 @@ dict_MyPlaylists = {
     "criando2020": "7055103684",
     "tribute": "5987955924",
     "nostalgia": "7326226044",
+    "spring2020": "7448230044",
     "a.upaupa": "6989894804",
     }
 
