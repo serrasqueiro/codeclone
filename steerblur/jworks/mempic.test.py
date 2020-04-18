@@ -89,7 +89,11 @@ def dump_basic_pic(outFile, errFile, name, n, opts):
     if len(data) < 8:
         print("{}: too short".format(name))
         return 3
-    if data.isascii():
+    try:
+        is_asc = data.isascii()
+    except AttributeError:
+        is_asc = False
+    if is_asc:
         decoded = data.decode("latin-1")
         sPreHeader = simpler_ascii(decoded.replace("\n", "\\n"))
         print("sPreHeader={}".format(sPreHeader))
@@ -157,7 +161,8 @@ def dump_exif_details (outFile, name, pm, xfilter=None):
                     s = y[:maxShownLen] if len(y) > maxShownLen else y
                 post = "(...)" if len(y) > maxShownLen else ""
                 doShow = showAll
-                shown = f"{x}: {s}{post}"
+                # not compatible with older Pythons... shown = f"{x}: {s}{post}"
+                shown = "{}: {}{}".format(x, s, post)
                 if doShow:
                     if outFile is not None:
                         outFile.write("{}\n".format(shown))

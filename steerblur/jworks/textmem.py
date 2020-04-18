@@ -18,12 +18,13 @@ class RawMem:
     """ Raw Memory class """
     encoding = ""
     cont = []
+    hash = None
 
     """ Abstract class RawMem """
     def __init__(self, buf=None, rawASCII=False):
         this_buf = [] if buf is None else buf
         self.msgs = this_buf
-        self.hash = None
+        self.hash = dict()
         if rawASCII:
             self.decoding = "ascii"
         else:
@@ -183,9 +184,9 @@ class TextMem(RawMem):
 class Base64Mem(RawMem):
     """ Base64 operations, class """
     symbols = ""
-    hash = dict()
 
     def hash_symbols (self):
+        assert self.hash is not None
         symb = """
 ABCDEFGHIJKLMNOPQRSTUVWXYZ
 abcdefghijklmnopqrstuvwxyz
@@ -193,11 +194,13 @@ abcdefghijklmnopqrstuvwxyz
 +/="""
         self.symbols = symb.replace( "\n", "" )
         for d in range(256):
-            c = chr(d)
+            c, w = chr(d), -1
             try:
                 w = self.symbols.index(c)
             except IndexError:
-                w = -1
+                pass
+            except ValueError:
+                pass
             self.hash[d] = w
         return True
 
