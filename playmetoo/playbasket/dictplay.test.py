@@ -7,7 +7,7 @@
 # pylint: disable=missing-docstring, bad-whitespace, invalid-name
 
 import sys
-from dictplay import \
+from playbasket.dictplay import \
     dict_MyPlaylists, \
     dict_MyGridChannels
 
