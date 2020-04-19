@@ -6,7 +6,7 @@
   Compatibility: python 3.
 """
 
-# pylint: disable=(invalid-name
+# pylint: disable=invalid-name
 
 from os.path import realpath
 try:

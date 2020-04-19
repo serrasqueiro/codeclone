@@ -106,6 +106,7 @@ def dump_basic_pic(outFile, errFile, name, n, opts):
         assert isOk
         x = pm.meta["info"]["width"]
         y = pm.meta["info"]["height"]
+        dates = (pm.meta["info"]["DateTime"], pm.meta["info"]["DateISO"])
         if verbose > 0:
             infos = dump_exif_details(outFile, name, pm)
         else:
@@ -129,6 +130,7 @@ def dump_basic_pic(outFile, errFile, name, n, opts):
                                 sPreHeader, sExtra))
             else:
                 print("\tx={}, y={}; NO EXIF{}".format(sizeX, sizeY, sExtra))
+            print("DateTime({}): {}, DateISO: {}".format(type(dates[0]), dates[0], dates[1]))
     return 0
 
 
