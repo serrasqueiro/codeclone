@@ -4,7 +4,7 @@
 test safeurl.py
 """
 
-# pylint: disable=missing-docstring, invalid-name
+# pylint: disable=unused-argument, invalid-name
 
 
 import sys
@@ -24,6 +24,7 @@ def main():
 def run_tests (outFile, errFile, inFile, inArgs):
     """ Basic tests """
     code = None
+    fIn = inFile
     x = safeurl.Deposit()
     if inArgs==[]:
         args = ["a"]
@@ -31,18 +32,33 @@ def run_tests (outFile, errFile, inFile, inArgs):
         args = inArgs
     cmd = args[0]
     param = args[1:]
+    while param and param[0].startswith("-"):
+        if param[0] == "--input":
+            inName = param[1]
+            fIn = open(inName, "r")
+            del param[:2]
+            continue
+        return None
     if cmd == "a":
-        input = inFile
-        for line in inFile.read().split("\n"):
-            x.to_uri( line )
-            print("Line: '{}' (proto: {})".format( line, x.proto ))
-            x.show()
-            print("Qualified(file):", x.qual)
-            print("")
+        test_a(fIn, x)
         code = 0
     if param:
         print("param:", param)
     return code
+
+
+def test_a(fIn, x):
+    """ Test A """
+    for line in fIn.read().split("\n"):
+        if not line:
+            continue
+        x.to_uri(line)
+        print("Line: '{}' (proto: {})".format(line, x.proto))
+        x.show()
+        print("Qualified(file):", x.qual)
+        print("proto:", x.proto)
+        print("--\n")
+    return 0
 
 
 #
