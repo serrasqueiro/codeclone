@@ -1,23 +1,37 @@
 # safeurl.test.py  (c)2020  Henrique Moreira
 
 """
-  safeurl.test: test safeurl.py
+test safeurl.py
 """
 
-from safeurl import *
+# pylint: disable=missing-docstring, invalid-name
 
+
+import sys
+import playbasket.safeurl as safeurl
+
+
+def main():
+    """ Main! """
+    code = run_tests(sys.stdout, sys.stderr, sys.stdin, sys.argv[1:])
+    if code is None:
+        print("""safeurl.test.py [a|b|...]
+""")
+        code = 0
+    sys.exit(code)
 
 
 def run_tests (outFile, errFile, inFile, inArgs):
+    """ Basic tests """
     code = None
-    x = Deposit()
+    x = safeurl.Deposit()
     if inArgs==[]:
         args = ["a"]
     else:
         args = inArgs
     cmd = args[0]
     param = args[1:]
-    if cmd=="a":
+    if cmd == "a":
         input = inFile
         for line in inFile.read().split("\n"):
             x.to_uri( line )
@@ -35,10 +49,4 @@ def run_tests (outFile, errFile, inFile, inArgs):
 # Main script
 #
 if __name__ == "__main__":
-    import sys
-    code = run_tests(sys.stdout, sys.stderr, sys.stdin, sys.argv[1:])
-    if code is None:
-        print("""safeurl.test.py [a|b|...]
-""")
-        code = 0
-    sys.exit(code)
+    main()

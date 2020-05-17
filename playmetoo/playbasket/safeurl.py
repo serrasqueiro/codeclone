@@ -4,14 +4,13 @@
   safeurl: safe URL
 """
 
+# pylint: disable=invalid-name
 
 import sys
 
 
-#
-# CLASS Deposit
-#
 class Deposit:
+    """ Deposit class for URLs/ URIs """
     def __init__ (self, pURI=None):
         self.uri = pURI
         self.qual = pURI
