@@ -24,6 +24,7 @@ dict_MyPlaylists = {
     "spring2020": "7448230044",
     "a.upaupa": "6989894804",
     "p.energia": "6153094824",
+    "p.chain.2018": "4830644188",
     }
 
 # digital grid on operator 1:
