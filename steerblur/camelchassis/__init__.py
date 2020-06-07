@@ -1,8 +1,8 @@
+# (c)2018, 2020  Henrique Moreira
+
 """camelchassis packages from codeclone_com
-   (c)2019  Henrique Moreira
 """
 
-
-__version__ = '1.0 03'
-__date__ = '2019-10-04'
+__version__ = '1.1 04'
+__date__ = '2020-06-07'
 
