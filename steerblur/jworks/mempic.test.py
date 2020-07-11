@@ -159,16 +159,21 @@ def dump_exif_details (outFile, name, pm, xfilter=None):
                          ):
                 if isinstance(y, str) and y.strip() == "":
                     s = showEmpty
+                    a_len = len(s)
                 else:
-                    s = y[:maxShownLen] if len(y) > maxShownLen else y
-                post = "(...)" if len(y) > maxShownLen else ""
+                    try:
+                        a_len = len(y)
+                    except TypeError:
+                        a_len = 0
+                    s = y[:maxShownLen] if a_len > maxShownLen else y
+                post = "(...)" if a_len > maxShownLen else ""
                 doShow = showAll
                 # not compatible with older Pythons... shown = f"{x}: {s}{post}"
                 shown = "{}: {}{}".format(x, s, post)
                 if doShow:
                     if outFile is not None:
                         outFile.write("{}\n".format(shown))
-                    desc.append( shown )
+                    desc.append(shown)
                 myDict[x] = val
     res = (desc, myDict)
     return res
