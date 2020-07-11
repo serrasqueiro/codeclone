@@ -37,7 +37,10 @@ class TagsExif():
     def get_info(self, idx):
         assert isinstance(idx, int)
         assert self.thisExifInfo is not None
-        return self.thisExifInfo[idx]
+        result = self.thisExifInfo.get(idx)
+        if result is None:
+            result = "(unknown)"
+        return result
 
     def what_date(self, keyName=""):
         assert isinstance(keyName, str)

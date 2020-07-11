@@ -64,7 +64,7 @@ def exif_str_date(dttm, iso_format=None):
         a_val = dttm
         dt = datetime.datetime.fromtimestamp(a_val)
     else:
-        assert False
+        return "-"
     a_str = dt.strftime(fmt)
     return a_str
 
