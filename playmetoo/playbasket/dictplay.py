@@ -27,6 +27,7 @@ dict_MyPlaylists = {
     "p.chain.2018": "4830644188",
     "a.conhonha": "7379060404",
     "a.comoassim": "5100792024",
+    "pizasgarras": "6134289344",
     }
 
 # digital grid on operator 1:
