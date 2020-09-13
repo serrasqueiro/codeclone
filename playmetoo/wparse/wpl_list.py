@@ -16,7 +16,7 @@ def main():
     """ Main script """
     code = run(sys.stdout, sys.stderr, sys.argv[1:])
     if code is None:
-        print("""python wpl_test.py file [...]
+        print("""python wpl_list.py file [...]
 """)
         code = 0
     sys.exit(code)
