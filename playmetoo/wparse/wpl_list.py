@@ -5,7 +5,7 @@
 Test wpl_test.py
 """
 
-# pylint: disable=unused-argument
+# pylint: disable=unused-variable, invalid-name
 
 import sys
 import os.path
@@ -44,7 +44,7 @@ def run(out, err, args) -> int:
         if verbose:
             err.write(f"Reading: {bname}\n")
         fp = open(name, "r", encoding="UTF-8")
-        code, a_wpl = list_wpl(out, err, name, fp.read())
+        code, a_wpl = read_wpl(fp.read(), name)
         if not bname:
             bname = name
         if code:
@@ -66,26 +66,44 @@ def dump_wpl(out, name, a_wpl, opts=None) -> bool:
     for one in seq:
         if not one:
             continue
-        if n_files > 1:
+        if n_files > 1 or verbose > 0:
             out.write(f"{name}:")
         out.write(f"{one}\n")
     return True
 
 
-def list_wpl(out, err, name, cont) -> tuple:
-    """ List '.wpl' (Windows Media Player playlist)
+def read_wpl(cont, path="", debug=1) -> tuple:
+    """ Reads '.wpl' (Windows Media Player playlist)
     """
     assert isinstance(cont, str)
+    assert 0 <= debug <= 9
     par = xmltodict.parse(cont)
     ks = par["smil"]
     head = ks["head"]
-    tail = ks["body"]
-    seq = tail["seq"]["media"]
+    body = ks.get("body")
+    if body is None:
+        return (2, (head, None, tuple()))
+    tail = body["seq"]
+    seq = tail["media"]
+    if not isinstance(seq, (list, tuple)):
+        what = seq["@src"]
+        assert isinstance(what, str)
+        seq = (seq,)
+    if debug > 0:
+        idx = 0
+        shown = f"{path}: " if path else ""
+        print(f"\nDebug:\n{shown}tail keys ({tail.keys()}) = {type(tail)}")
+        print(f"seq type {type(seq)}, len# {len(seq)}")
+        for one in seq:
+            idx += 1
+            print(f"{idx}: ({type(one)}) {one}")
     texts = [better_wpl_path(one["@src"]) for one in seq]
-    return (0, (head, tail, texts))
+    return (0, (head, seq, texts))
 
 
 def better_wpl_path(path) -> str:
+    """ Use slashes instead of backslashes for indicating paths!
+    """
     assert isinstance(path, str)
     if not path:
         return ""
