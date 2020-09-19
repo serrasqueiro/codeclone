@@ -96,6 +96,8 @@ def exif_str_date(dttm, iso_format=None):
 
 
 def norm_date(s, has_seconds=False) -> str:
+    """ Shows a basic ISO-date:		YYYY-MM-DD HH:MM(:SS)
+    """
     # datetime.datetime.isoformat(dttm) = '2020-09-19T17:43:58.638106'
     # datetime.datetime.isoformat(dttm, timespec='seconds') = '2020-09-19T17:43:58'
     fmt = "%Y-%m-%d %H:%M"
