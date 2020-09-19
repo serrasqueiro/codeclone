@@ -9,6 +9,7 @@
 # pylint: disable=unused-argument, invalid-name
 
 import datetime
+from jworks.mjd_helper import date_to_MJD
 
 # dttm = datetime.datetime.strptime("2015:01:26 18:32:33", "%Y:%m:%d %H:%M:%S")
 # is: datetime.datetime(2015, 1, 26, 18, 32, 33)
@@ -20,10 +21,13 @@ def basic_test():
     tup = (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
     s = exif_str_date(dt)
     back = exif_date(s)
-    print("now={},\n"
+    n_date = norm_date(dt, True)
+    print("now={} = {},\n"
           "exif_str_date('{}')={}\n"
-          "{}".format(tup, dt, s, back))
+          "{}".format(tup, n_date, dt, s, back))
     #print("Invalid date:", exif_date(None))
+    mjd = date_to_MJD(dt)
+    print("MJD (Modified Julian Day):", mjd)
     return 0
 
 
@@ -38,6 +42,28 @@ def exif_date(s, has_seconds=":%S"):
     if s is None:
         return None
     in_date_format = "%Y:%m:%d %H:%M" + has_seconds
+    try:
+        dttm = datetime.datetime.strptime(s, in_date_format)
+    except ValueError:
+        dttm = None
+    return dttm
+
+
+def pt_date(s, has_time=False, has_seconds=True):
+    """
+    Converts a date in portuguese format (DD-MM-YYYY) into a datetime.
+    :param s: input string, e.g. '23-12-1971' or '19-09-2020 23:58:59'
+    :param has_time: input string has not only year date but also time
+    :param has_seconds: input string has seconds (must put 'has_time'=True too!)
+    :return: datetime
+    """
+    assert isinstance(has_seconds, str)
+    if s is None:
+        return None
+    if has_time:
+        in_date_format = "%Y:%m:%d %H:%M" + has_seconds
+    else:
+        in_date_format = "%Y:%m:%d"
     try:
         dttm = datetime.datetime.strptime(s, in_date_format)
     except ValueError:
@@ -67,6 +93,22 @@ def exif_str_date(dttm, iso_format=None):
         return "-"
     a_str = dt.strftime(fmt)
     return a_str
+
+
+def norm_date(s, has_seconds=False) -> str:
+    # datetime.datetime.isoformat(dttm) = '2020-09-19T17:43:58.638106'
+    # datetime.datetime.isoformat(dttm, timespec='seconds') = '2020-09-19T17:43:58'
+    fmt = "%Y-%m-%d %H:%M"
+    if has_seconds:
+        fmt += ":%S"
+    if isinstance(s, str):
+        res = pt_date(s, has_seconds)
+    elif isinstance(s, datetime.datetime):
+        dttm = s
+        res = datetime.datetime.strftime(dttm, fmt)
+    else:
+        assert False
+    return res
 
 
 #
