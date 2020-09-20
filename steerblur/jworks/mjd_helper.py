@@ -9,6 +9,9 @@ import datetime
 # pylint: disable=invalid-name, missing-function-docstring
 # pylint: disable=chained-comparison, attribute-defined-outside-init
 
+MJD_1970_1_1 = 40587
+#	STR_MJD_0 = '1858-11-17' (17 November 1858)
+
 
 def date_to_MJD(dttm) -> int:
     """ Converts a date to MJD """

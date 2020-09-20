@@ -11,6 +11,9 @@
 import datetime
 from jworks.mjd_helper import date_to_MJD
 
+MMJD_REF = 51544	# Modern MJD (MJD: Modified Julian Date), 1st January 2000!
+
+### Examples:
 # dttm = datetime.datetime.strptime("2015:01:26 18:32:33", "%Y:%m:%d %H:%M:%S")
 # is: datetime.datetime(2015, 1, 26, 18, 32, 33)
 
@@ -49,6 +52,29 @@ def exif_date(s, has_seconds=":%S"):
     return dttm
 
 
+def eu_date(s, has_time=False, has_seconds=True):
+    """
+    Converts a date in european format (ISO-like), YYYY-MM-DD into a datetime.
+    :param s: input string, e.g. '1971-12-23' or '2020-09-19 23:58:59'
+    :param has_time: input string has not only year date but also time
+    :param has_seconds: input string has seconds (must put 'has_time'=True too!)
+    :return: datetime
+    """
+    assert isinstance(s, str)
+    assert isinstance(has_seconds, bool)
+    if s is None:
+        return None
+    if has_time:
+        in_date_format = "%Y-%m-%d %H:%M" + has_seconds
+    else:
+        in_date_format = "%Y-%m-%d"
+    try:
+        dttm = datetime.datetime.strptime(s, in_date_format)
+    except ValueError:
+        dttm = None
+    return dttm
+
+
 def pt_date(s, has_time=False, has_seconds=True):
     """
     Converts a date in portuguese format (DD-MM-YYYY) into a datetime.
@@ -57,18 +83,34 @@ def pt_date(s, has_time=False, has_seconds=True):
     :param has_seconds: input string has seconds (must put 'has_time'=True too!)
     :return: datetime
     """
-    assert isinstance(has_seconds, str)
+    assert isinstance(s, str)
+    assert isinstance(has_seconds, bool)
     if s is None:
         return None
     if has_time:
-        in_date_format = "%Y:%m:%d %H:%M" + has_seconds
+        in_date_format = "%d-%m-%Y %H:%M" + has_seconds
     else:
-        in_date_format = "%Y:%m:%d"
+        in_date_format = "%d-%m-%Y"
     try:
         dttm = datetime.datetime.strptime(s, in_date_format)
     except ValueError:
         dttm = None
     return dttm
+
+
+def mjd_from(s, country_fmt="eu"):
+    """ Returns the MJD (Modified Julian Date) from the string date provided 's'
+    """
+    if country_fmt == "eu":
+        dttm = eu_date(s)
+    elif country_fmt == "pt":
+        dttm = pt_date(s)
+    else:
+        dttm = None
+    if dttm is None:
+        return -1
+    mjd = date_to_MJD(dttm)
+    return mjd
 
 
 def exif_str_date(dttm, iso_format=None):
