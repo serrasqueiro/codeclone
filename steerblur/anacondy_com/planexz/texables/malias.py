@@ -10,11 +10,12 @@
 
 
 import sys
-from sys import argv
 import re
 
 
-def main(args):
+def main():
+    """ Main script """
+    args = sys.argv[1:]
     code = test_malias(args)
     if code is None:
         print("""malias COMMAND [options]
@@ -41,7 +42,7 @@ def test_malias (args):
     param = args[1:]
     if cmd == "help":
         return None
-    elif cmd=="test":
+    if cmd == "test":
         return run_test(param, verbose)
     print("Invalid command: {}\n".format(cmd))
     return None
@@ -63,24 +64,27 @@ def run_test(param, verbose):
 def read_malias (inFile, mailBoxes, listed, debug=0):
     """read mail alias
     """
-    numberOfM = len( mailBoxes )
-    if debug>0:
-        print("Reading", inFile, "; n# mailBoxes: {}".format( numberOfM ))
-    isOk = mails_ok( mailBoxes )
+    numberOfM = len(mailBoxes)
+    if debug > 0:
+        print("Reading", inFile, "; n# mailBoxes: {}".format(numberOfM))
+    isOk = mails_ok(mailBoxes)
     if not isOk:
         return 3
-    with open(inFile, "rb") as q:
-        cont = q.read()
+    try:
+        q = open(inFile, "rb")
+    except PermissionError:
+        return 13
+    cont = q.read()
     # Make sure there is no '\r'
     if cont.find( "\r".encode() ) >= 0:
         return 6
-    with open( inFile, "r" ) as p:
-        cont = p.read().split( "\n" )
+    with open(inFile, "r") as p:
+        cont = p.read().splitlines()
     for a in cont:
         pre = ""
         s = a.strip( " \t\r" )
-        if a!=s:
-            if debug>0:
+        if a != s:
+            if debug > 0:
                 pre = "(ERROR: unstripped line) "
                 print( pre+s )
             return 5
@@ -89,7 +93,7 @@ def read_malias (inFile, mailBoxes, listed, debug=0):
         if numberOfM > 0 and ma.mainMail not in mailBoxes:
             continue
         listed.append(ma)
-        if debug>0:
+        if debug > 0:
             print("MailAlias({}), alias #{}".format( ma, len(ma.alias) ))
             idx = 0
             for a in ma.alias:
@@ -277,4 +281,4 @@ class MailAlias(AnyMail):
 #
 if __name__ == "__main__":
     print("Please import, test only, follows...")
-    main(sys.argv[1:])
+    main()
