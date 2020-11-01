@@ -21,3 +21,15 @@ textlike.py then evolved
 ptchamp/
 +++
 An unfinished package to parse 'season_pt_2018.zip', portuguese football.
+
+
+jworks/
++++
+Show JPG properties (date, ...)
+
+
+mlaby/
++++
+Currencies, and a few other specialities (RSA handling, obsolete).
+
+
