@@ -96,12 +96,27 @@ class VPL(GenericPlaylist):
         code = 0
         line_sep = bytes(self._line_sep, encoding="ascii")
         cont = self._data.split(line_sep)
-        if cont[0] != self._headerline:
+        if unencode(cont[0]) != self._headerline:
             start = 0
         listed = VPL._entries(cont[start:])
         self.content = listed
         code = int(start > 0)	# non-zero means an error
         return code
+
+    def linear(self, start=1) -> list:
+        """ Returns a plain list of (linear) content.
+        """
+        res = list()
+        line_sep = bytes(self._line_sep, encoding="ascii")
+        cont = self._data.split(line_sep)
+        if unencode(cont[0]) != self._headerline:
+            start = 0
+        for item in cont[start:]:
+            if not item:
+                continue
+            there = unencode(item.split(b'\x01'))
+            res.append(there)
+        return res
 
     @staticmethod
     def _entries(bytelist) -> list:

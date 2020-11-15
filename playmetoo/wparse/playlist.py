@@ -46,6 +46,24 @@ def unencode(ubytes, origin=_LATIN_1):
     assert False
     return None
 
+def fields_comp(known, new) -> tuple:
+    assert isinstance(known, list)
+    assert isinstance(new, list)
+    added = 0
+    res = known
+    bogus = ""
+    for key in new:
+        if key not in known:
+            added += 1
+            res.append(key)
+    if added:
+        for key in known:
+            if key not in new:
+                return [], key
+    if len(known) >= len(res):
+        return [], bogus
+    return res, bogus
+
 
 # Main script
 if __name__ == "__main__":
