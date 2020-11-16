@@ -13,6 +13,9 @@ from wparse.playlist import GenericPlaylist, \
      unencode
 
 
+IDX_KEYS_VPL = '1#NAME 2#ATST 3#ALBM 4#TRKN 5#TYPE 6#RATE 7#FREQ 8#CHNL 9#SIZE 10#TIME 11#CUE1 12#CUE0 13#GENR 14#YEAR'
+
+
 def main():
     """ Main script """
     code = run(sys.stdout, sys.stderr, sys.argv[1:])

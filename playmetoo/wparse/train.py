@@ -8,7 +8,7 @@ Train playlists:
    - .wpl: Microsoft 'Windows Playlist' (Windows Media Player and such)
 """
 
-# pylint: disable=unused-argument, missing-function-docstring
+# pylint: disable=no-self-use, missing-function-docstring
 
 import sys
 import os
@@ -51,7 +51,9 @@ def run(out, err, args) -> int:
         if os.path.isfile(name) and name.lower().endswith(EXT_TRAIN):
             ext = name.lower().split(".")[-1]
             listed.append(f".{ext}\t{name}")
-    listed.sort()
+        else:
+            err.write(f"Ignored: {name}\n")
+    #listed.sort()
     if verbose > 0:
         print("\n".join(listed))
     code = run_train(out, err, listed, opts)
@@ -72,14 +74,23 @@ def run_train(out, err, rows, opts) -> int:
         if play is None:
             err.write(f"Skipped unhandled playlist ({ext}): {path}\n")
             continue
-        train.train(play, ext)
+        is_ok = train.train(play, ext)
+        if opts["verbose"] > 0:
+            print("{}: {}".format(path, "OK" if is_ok else "NotOk"))
+        if not is_ok:
+            shown = "\n".join(train.fields[ext]["@msgs"])
+            err.write(f"# Bogus for {path}:\n{shown}\n")
+            return 1
     for ext in sorted(list(train.fields.keys())):
         print("")
         print(f"::: {ext} :")
         spec = train.fields[ext]
         msgs = spec["@msgs"]
         for what in sorted(list(spec.keys())):
-            print(f"fields[{ext}]['{what}']: {spec[what]}")
+            shown = spec[what]
+            if what == "key-order":
+                shown = idx_keys(spec[what])
+            out.write(f"fields[{ext}]['{what}']: {shown}\n")
         if msgs:
             shown = "\n".join(msgs)
             err.write(f"# Bogus input ({ext}):\n{shown}\n")
@@ -98,7 +109,8 @@ class PTrain:
 
     def train(self, playlist, extension="") -> bool:
         lines = playlist.linear()
-        return self._add_content(playlist.data(), lines, extension)
+        is_ok = self._add_content(playlist.data(), lines, extension)
+        return is_ok
 
     def fields_by(self, extension) -> dict:
         return self.fields[extension]
@@ -110,9 +122,26 @@ class PTrain:
             self.ext = extension
         else:
             self.ext = self._head_to_ext[header]
-        return self._add_payload(cont)
+        this = self._add_payload(cont)
+        if self.ext not in self.fields:
+            self.fields[self.ext] = this
+        return self._add_data(this, self.fields[self.ext])
 
-    def _add_payload(self, cont) -> bool:
+    def _add_data(self, this, dest):
+        new = this["key-order"]
+        known = dest["key-order"]
+        res, bogus = fields_comp(known, new)
+        if bogus:
+            dest["@msgs"] = [f"Inc.p. '{idx_keys(new)}'"] + \
+                            [f"- for  '{idx_keys(known)}': {bogus}"]
+            return False
+        if res:
+            dest["key-order"] = res
+        dest["@msgs"] += this["@msgs"]
+        dest["samples"] += this["samples"]
+        return True
+
+    def _add_payload(self, cont) -> dict:
         this = {"key-order": list(),
                 "@msgs": list(),
                 "samples": 0,
@@ -149,14 +178,29 @@ class PTrain:
             if ori_key:
                 keep, bogus = fields_comp(ori_key, keys)
                 if bogus:
-                    this["@msgs"].append(f"Field {bogus} at {ori_key} incompatible with: {keys}")
+                    msg = f"Field {bogus} at {idx_keys(ori_key)} incompatible with: {idx_keys(keys)}"
+                    this["@msgs"].append(msg)
                 elif keep:
                     ori_key = keep
             else:
                 ori_key = keys
         this["key-order"] = ori_key
-        self.fields[self.ext] = this
-        return not this["@msgs"]
+        return this
+
+
+def idx_keys(fields, sep=" ") -> str:
+    """ Show field index and key, to ease human understanding. """
+    astr, idx = "", 0
+    if isinstance(fields, str):
+        return fields
+    assert isinstance(fields, (tuple, list))
+    for name in fields:
+        idx += 1
+        if not name:
+            continue
+        astr += sep if idx > 1 else ""
+        astr += f"{idx}#{name}"
+    return astr
 
 
 # Main script
