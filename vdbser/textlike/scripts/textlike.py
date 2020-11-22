@@ -7,8 +7,8 @@
 """
 
 import sys
-from redito import BareText, xCharMap
-from patch_pdf import *
+from waxpage.redit import BareText, char_map
+from patch_pdf import extractText_alt_PageObject
 import PyPDF2
 
 
@@ -283,8 +283,8 @@ Cedil:
 """
   aList = a.split( "\n" )
   for lineStr in aList:
-    s = xCharMap.simpler_ascii( lineStr )
-    t = xCharMap.simpler_ascii( lineStr, 1 )
+    s = char_map.simpler_ascii( lineStr )
+    t = char_map.simpler_ascii( lineStr, 1 )
     if s=="":
       continue
     print("s:", s)
