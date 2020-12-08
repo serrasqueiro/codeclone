@@ -5,26 +5,56 @@
 
 # pylint: disable=missing-docstring
 
-#DEBUG = 1
+ANY_DEBUG = 1
 
-def dprint(debug, *args):
-    sep = ""
-    if debug > 0:
-        print("###", args)
-        print("---<")
-        for item in args:
-            print(sep, end='')
-            print(item, end='')
-            sep = " "
-        print("")
+debug_area = {
+    'sample': 1,
+    }
 
 
-def bprint(*args):
+def main_test():
+    """ Basic test """
+    print("...\nIf you have defined ANY_DEBUG, you will see the next line.\n")
+    dprint("sample", "Please import", __file__)
+    print(".")
+
+
+def debug_level() -> int:
     try:
-        debug = DEBUG
+        debug = ANY_DEBUG
     except NameError:
         debug = 0
-    dprint(int(debug), *args)
+    return int(debug)
+
+
+def bprint(*args) -> bool:
+    """ Basic debug print """
+    return dprint('', *args)
+
+
+def cprint(debug, *args) -> bool:
+    """ Conditional debug print """
+    if debug <= 0:
+        return False
+    return dprint('', *args)
+
+
+def dprint(area, *args) -> bool:
+    debug = debug_level()
+    if debug <= 0:
+        return False
+    if area and debug_area[area] <= 0:
+        return False
+    if area:
+        show = f"[{area}] "
+    else:
+        show = ""
+    if len(args) <= 0:
+        return True
+    print(show, end='')
+    print(*args)
+    return True
+
 
 
 #
@@ -32,5 +62,4 @@ def bprint(*args):
 #
 if __name__ == "__main__":
     print(f"Please import {__file__}")
-    print("...\nIf you have defined DEBUG, you will see a next line.\n")
-    bprint("Import", __file__)
+    main_test()
