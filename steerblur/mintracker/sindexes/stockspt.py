@@ -1,4 +1,4 @@
-""" weight stocks
+""" stockspt
 	(c) 2020  Henrique Moreira
 """
 # date: 26.02.2020

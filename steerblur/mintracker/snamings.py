@@ -7,8 +7,8 @@ Module for stock namings/ abbreviations/ weights.
 # pylint: disable=missing-docstring, invalid-name
 
 
-import sindexes.weight_stocks
-from sindexes.weight_stocks import STK_W_PSI20
+import sindexes.stockspt
+from sindexes.stockspt import STK_W_PSI20
 from sindexes.isin import ISIN_checksum, ISIN
 
 
@@ -23,7 +23,7 @@ def run_main(args):
     for name, lines in stk_pair:
         sw = StockWeight(name, lines)
         sr = RefISIN()
-        invalids = sr.add_ISIN_refs(sindexes.weight_stocks.STK_ISIN_PSI20)
+        invalids = sr.add_ISIN_refs(sindexes.stockspt.STK_ISIN_PSI20)
         if invalids != []:
             print("Invalid ISIN (#{} invalid): {}".format(len(invalids), invalids))
             assert False

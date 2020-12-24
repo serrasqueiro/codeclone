@@ -9,7 +9,7 @@ Module for testing 'mintracker' related modules
 import sys
 from sys import stdout, stderr
 from snamings import comp_name_ok
-from sindexes.weight_stocks import STK_ISIN_PSI20
+from sindexes.stockspt import STK_ISIN_PSI20
 from sindexes.isin import ISIN_checksum
 
 
