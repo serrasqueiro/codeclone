@@ -25,9 +25,9 @@ def test_run(args):
         code = run_tests(sys.stdout, sys.stderr, args)
         sys.exit(code)
 
-    check_dict( dict_MyPlaylists, True, 12 )
+    check_dict(dict_MyPlaylists, True, 12)
     print(".\n")
-    check_dict( dict_MyGridChannels, False, 17 )
+    check_dict(dict_MyGridChannels, False, 17)
     print(".\n")
     sys.exit(0)
 
@@ -74,26 +74,26 @@ def check_dict (d, forceStrVal=False, maxKeyLen=-1):
         assert isOk
         assert k[0].isalnum()
         if isInt:
-            assert aVal>=-1
+            assert aVal >= -1
         else:
-            assert len(val)>=2 and len(val)<30
+            assert len(val) >= 2 and len(val) < 30
         assert val.isdigit() or val.isalpha()
         assert val not in dctVal
-        dctVal[ aVal ] = k
+        dctVal[aVal] = k
         u = k.upper()
         assert u not in dctKey
-        dctKey[ u ] = k
-        y = replace_all( u, " +/()_" )
+        dctKey[u] = k
+        y = replace_all(u, " +/()_")
         assert y not in upKey
         upKey[ y ] = u
         isOk = k.find("  ") == -1
         assert isOk
-    keyList = list( dctVal.keys() )
+    keyList = list(dctVal.keys())
     keyList.sort()
     print("...by number:")
     allNumbers = None
     for x in keyList:
-        print("{:<12} {}".format( x, dctVal[ x ] ))
+        print("{:<12} {}".format(x, dctVal[ x ]))
         try:
             i = int(x)
         except ValueError:
@@ -176,7 +176,7 @@ def check (outFile, errFile, d):
             if sVal in valDict:
                 if warnDuplicate:
                     print("Warn: duplicate value '{}', first seen on '{}' (now at: '{}')"
-                          "".format( sVal, valDict[sVal], key ))
+                          "".format(sVal, valDict[sVal], key))
             else:
                 valDict[sVal] = key
             idx += 1

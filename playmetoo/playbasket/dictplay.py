@@ -29,6 +29,7 @@ dict_MyPlaylists = {
     "a.comoassim": "5100792024",
     "pizasgarras": "6134289344",
     "a.keed": "8097989522",
+    "a.gato": "6489586364",
     }
 
 # digital grid on operator 1:
