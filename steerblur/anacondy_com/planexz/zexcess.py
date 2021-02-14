@@ -11,7 +11,7 @@
 import zipfile
 from xml.etree.ElementTree import iterparse
 from ztable.textual import trim_text
-from redito import xCharMap
+from waxpage.redit import char_map
 
 
 class ZRefs():
@@ -185,7 +185,7 @@ class ZTable(ZRefs):
     def _normal_s_value(self, s):
         if isinstance(s, str):
             if self.strict_ch is not None:
-                res = xCharMap.simpler_ascii(s)
+                res = char_map.simpler_ascii(s)
                 if res != s:
                     self._add_ref(res, s)
             else:

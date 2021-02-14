@@ -6,7 +6,7 @@
   Compatibility: python 3.
 """
 
-from redito import xCharMap
+from waxpage.redit import char_map
 
 # pylint: disable=missing-docstring
 
@@ -15,10 +15,10 @@ def simpler_list(a, sep=None):
     res = []
     if isinstance(a, (list, tuple)):
         for elem in a:
-            s = xCharMap.simpler_ascii(elem)
+            s = char_map.simpler_ascii(elem)
             res.append(s)
     else:
-        return xCharMap.simpler_ascii(a)
+        return char_map.simpler_ascii(a)
     if sep is None:
         return res
     return sep.join(res)
