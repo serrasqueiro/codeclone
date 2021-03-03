@@ -4,14 +4,14 @@ Module for textual TSV and related files
 (c)2020  Henrique Moreira (part of 'draftdb', teq)
 """
 
-# pylint: disable=missing-docstring, invalid-name
+# pylint: disable=missing-docstring
 
 import sys
 import util.strlist
+import teq.ttext as ttext
 from util.strlist import expand_list
 from util.osindependent import TaPath
-from teq.ttext import TsvBase
-from redito import xCharMap
+from waxpage.redit import char_map
 
 
 def run_main(args):
@@ -36,50 +36,48 @@ def run_main(args):
             break
     if code != 0:
         print("TESTS failed, code:", code)
-    ks, _ = util.strlist.dict_order(notes)
-    if ks:
+    ksimple, _ = util.strlist.dict_order(notes)
+    if ksimple:
         print("The following tables were shown simpler:\n{}"
-              "".format(expand_list(ks, "\t-")))
+              "".format(expand_list(ksimple, "\t-")))
     return code
 
 
 def run_test_cat(notes, opts, d):
     debug = 1
-    ta = TaPath(d)
-    if not ta.ok_path():
-        print("Invalid path:", ta)
+    tap = TaPath(d)
+    if not tap.ok_path():
+        print("Invalid path:", tap)
         return 1
-    if not ta.is_dir():
-        print("Not a directory:", ta)
-    if ta.path.startswith("../"):
+    if not tap.is_dir():
+        print("Not a directory:", tap)
+    if tap.path.startswith("../"):
         pass
     else:
-        ta.cd_path()
-    print("Dir: {}, abs_path: {}".format(ta, ta.abs_path))
-    tb = TsvBase("any-db")
+        tap.cd_path()
+    print("Dir: {}, abs_path: {}".format(tap, tap.abs_path))
+    ttb = ttext.TsvBase("any-db")
     if opts["ext"]:
-        tb.ext = opts["ext"]
-    rel_names = tb.scan_tsv(ta.path)
-    tbl = tb.get_multiple_subnames()
-    assert tbl == []
-    is_ok = tb.read_files(rel_names, debug=debug)
-    print("tb.read_files(rel_names={}) returned {}".format(rel_names, is_ok))
-    if not tb.names:
+        ttb.ext = opts["ext"]
+    rel_names = ttb.scan_tsv(tap.path)
+    tbl = ttb.get_multiple_subnames()
+    assert not tbl
+    fails = ttb.read_files(rel_names, debug=debug)
+    print("ttb.read_files(rel_names={}) returned fails={}".format(rel_names, fails))
+    if not ttb.names:
         print("No files found: {} (ext: {}).".format(d, opts["ext"]))
         return 2
     print("Tables:")
-    print(expand_list(tb.names, "\t- ", 1))
-    print(expand_list(util.strlist.dict_order(tb.names, "z")[0], "\t=", post=" (reverse order)\n"))
-    for name in tb.names:
-        cont = tb.get_content(name)
-        tbl = tb.get_table(name)
-        shown = [s.split("\t") for s in cont]
+    print(expand_list(ttb.names, "\t- ", 1))
+    print(expand_list(util.strlist.dict_order(ttb.names, "z")[0], "\t=", post=" (reverse order)\n"))
+    for name in ttb.names:
+        cont = ttb.get_content(name)
+        tbl = ttb.get_table(name)
+        shown = [astr.split("\t") for astr in cont]
         flown = flow_list(shown)
-        try:
-            print("{}: {} line(s)\n{}<<<".format(name, len(cont), flown))
-        except UnicodeEncodeError:
+        s_str = char_map.simpler_ascii(flown)
+        if s_str != flown:	# ...except UnicodeEncodeError (Avoid that!)
             notes[name] = flown
-            print("{}: {} line(s)\n{}<<<".format(name, len(cont), xCharMap.simpler_ascii(flown)))
         msgs = tbl[3]
         print("Error msgs ({}): {}\n...\n".format(type(msgs), msgs))
     return 0

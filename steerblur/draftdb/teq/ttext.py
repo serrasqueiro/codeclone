@@ -46,7 +46,7 @@ class TsvBase(AnyBTable):
         self._path_dict = dict()
         self._all = dict()
 
-    def _process_read(self, f_in, ta, rel_name, debug=0):
+    def _process_read(self, f_in, rel_name, debug=0):
         assert f_in is not None
         info = ((rel_name,), (None, tuple()), (0, self._default_encoding, []), tuple())
         data = f_in.read()
@@ -160,7 +160,7 @@ class TsvBase(AnyBTable):
         return res
 
 
-    def read_files(self, rel_paths, debug=0):
+    def read_files(self, rel_paths, debug=0) -> int:
         assert self.ext
         count_fail = 0
         for p in rel_paths:
@@ -176,7 +176,7 @@ class TsvBase(AnyBTable):
                 print("is_file({}): {}".format(ta, is_ok))
             if is_ok:
                 with open(ta.path, "rb") as f_in:
-                    info = self._process_read(f_in, ta, p)
+                    info = self._process_read(f_in, p)
                     assert info is not None
                     rel_name = self._replace_content(info)
             else:
@@ -189,7 +189,7 @@ class TsvBase(AnyBTable):
     def get_content(self, rel_name):
         return self._get_content(rel_name)
 
-    def get_multiple_subnames(self):
+    def get_multiple_subnames(self) -> list:
         """
         Returns a list with pairs of ("sub_name", "path") for sub_names which are
         'ambiguous'. I.e. more than one path.
