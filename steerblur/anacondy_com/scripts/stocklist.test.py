@@ -21,6 +21,7 @@ def test_stocklist(out_file, err_file, in_args):
     :param in_args: system args
     :return: int, or None, if parameters are wrong.
     """
+    # pylint: disable=line-too-long
     assert out_file is not None
     assert err_file is not None
     param = in_args
