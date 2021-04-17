@@ -1,7 +1,8 @@
+# (c)2019, 2021  Henrique Moreira (part of 'camelchassis')
+
 """
  gen_access.py -- basic methods for file access
 """
-
 
 from os import name, stat
 from os.path import isdir, isfile
@@ -11,6 +12,13 @@ try:
  import pwd
 except ModuleNotFoundError:
  import winx_kernel as winpwd
+
+
+def main():
+  import sys
+  args = sys.argv[1:]
+  code = test_gen_access(args)
+  sys.exit(code)
 
 
 #
@@ -132,7 +140,4 @@ wideAccess = WideAccess()
 # Test suite
 #
 if __name__ == "__main__":
-  import sys
-  args = sys.argv[ 1: ]
-  code = test_gen_access( args )
-  sys.exit( code )
+  main()

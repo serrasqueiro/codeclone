@@ -1,10 +1,19 @@
+# (c)2019, 2021  Henrique Moreira
+
 """
  cchome.py -- basic methods for home vars
 """
 
+import sys
 import os
 from os.path import isdir, isfile
 import base64
+
+def main():
+    """ Main tests """
+    args = sys.argv[1:]
+    code = test_cchome(sys.stdout, sys.stderr, args)
+    sys.exit(code)
 
 
 #
@@ -152,7 +161,4 @@ class ConfigLines:
 # Test suite
 #
 if __name__ == "__main__":
-    import sys
-    args = sys.argv[ 1: ]
-    code = test_cchome( sys.stdout, sys.stderr, args )
-    sys.exit( code )
+    main()

@@ -1,3 +1,5 @@
+# (c)2019, 2021  Henrique Moreira (part of 'camelchassis')
+
 import ctypes as ctypes
 from ctypes import wintypes as wintypes
 

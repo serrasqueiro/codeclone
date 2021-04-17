@@ -1,14 +1,23 @@
+# (c)2019, 2021  Henrique Moreira
+
 """
  atomopen.py -- locks files before using them.
 """
 
-
 import os
+import sys
 from sys import stderr
 from time import sleep
 
 global_atom_debug=0
 global_atom_encoding=""
+
+
+def main():
+  """ Main tests """
+  args = sys.argv[1:]
+  code = test_atomopen(args)
+  sys.exit(code)
 
 
 try:
@@ -226,7 +235,4 @@ class AtomicOpen(GenOpen):
 # Test suite
 #
 if __name__ == "__main__":
-  import sys
-  args = sys.argv[ 1: ]
-  code = test_atomopen( args )
-  sys.exit( code )
+  main()
