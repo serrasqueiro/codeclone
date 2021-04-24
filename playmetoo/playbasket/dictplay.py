@@ -6,34 +6,6 @@
 
 # pylint: disable=missing-docstring
 
-dict_MyPlaylists = {
-    "k": "6895831904",
-    "yes": "6417264184",
-    "20thB": "6995293744",
-    "another": "5930226904",
-    "sombras": "6359769584",
-    "autumn": "6656722524",
-    "ultimate": "6996072584",
-    "verao": "6290445124",
-    "brasil": "7010440444",
-    "trance": "4680320448",
-    "blue": "7045636564",
-    "criando2020": "7055103684",
-    "tribute": "5987955924",
-    "nostalgia": "7326226044",
-    "spring2020": "7448230044",
-    "a.upaupa": "6989894804",
-    "p.energia": "6153094824",
-    "p.chain.2018": "4830644188",
-    "a.conhonha": "7379060404",
-    "a.comoassim": "5100792024",
-    "pizasgarras": "6134289344",
-    "a.keed": "8097989522",
-    "a.gato": "6489586364",
-    "outras": "8863384002",
-    "p.paraouvir": "8811712902",
-    }
-
 # digital grid on operator 1:
 dict_MyGridChannels = {
     "RTP 1": 1,
