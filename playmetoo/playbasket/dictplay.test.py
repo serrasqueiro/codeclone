@@ -7,9 +7,8 @@
 # pylint: disable=missing-docstring, bad-whitespace, invalid-name
 
 import sys
-from playbasket.dictplay import \
-    dict_MyPlaylists, \
-    dict_MyGridChannels
+from playbasket.dictplay import dict_MyGridChannels
+import misc.dictplays
 
 
 def test_run(args):
@@ -25,6 +24,7 @@ def test_run(args):
         code = run_tests(sys.stdout, sys.stderr, args)
         sys.exit(code)
 
+    dict_MyPlaylists = misc.dictplays.init_all()["playlists"]
     check_dict(dict_MyPlaylists, True, 12)
     print(".\n")
     check_dict(dict_MyGridChannels, False, 17)
@@ -65,7 +65,7 @@ def check_dict (d, forceStrVal=False, maxKeyLen=-1):
         assert isinstance(k, str)
         isInt = isinstance(val, int)
         if forceStrVal:
-            assert isinstance(val, str)
+            assert isinstance(val, str), f"val there is '{val}'"
         else:
             val = str( val )
         isOk = maxKeyLen==-1 or len( k )<=maxKeyLen
