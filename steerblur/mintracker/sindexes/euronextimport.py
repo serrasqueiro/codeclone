@@ -83,7 +83,7 @@ Hints are:
     sys.exit(code if code else 0)
 
 
-def runner (args, debug=0) -> bool:
+def runner (args, debug=0):
     """ Run importer """
     param = args
     filtered = None
@@ -101,15 +101,15 @@ def runner (args, debug=0) -> bool:
     if msgs:
         print("Note!\n")
         print(f"{shown}")
-        return False
+        return 1
     opts = {"filter": filtered,
             "pre": " " * 4,
             }
     if LINEAR_DUMP:
         linear_dump(imp, opts, sys.stdout, debug)
-        return True
+        return 0
     dump_by_index(imp, opts, sys.stdout, debug)
-    return True
+    return 0
 
 
 def linear_dump(imp, opts, out, debug=0):
