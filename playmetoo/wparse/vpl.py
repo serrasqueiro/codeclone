@@ -96,14 +96,19 @@ class VPL(GenericPlaylist):
 
     def parse(self, start=1) -> int:
         """ Parses '_data' content, and returns 0 if all ok! """
-        code = 0
+        is_ok = True
         line_sep = bytes(self._line_sep, encoding="ascii")
         cont = self._data.split(line_sep)
-        if unencode(cont[0]) != self._headerline:
-            start = 0
+        if not cont:
+            return 2
+        first = cont[0]
+        if start == 1:
+            if unencode(first) != self._headerline:
+                start = 0
+                is_ok = False
         listed = VPL._entries(cont[start:])
         self.content = listed
-        code = int(start > 0)	# non-zero means an error
+        code = int(not is_ok)	# non-zero means an error
         return code
 
     def linear(self, start=1) -> list:
