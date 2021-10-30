@@ -39,32 +39,36 @@ def run(out, err, args) -> int:
 
 def run_param(out, err, param, opts) -> int:
     """ Main function """
+    verbose = opts["verbose"]
     for name in param:
         assert not name.startswith("-")
+    method = "fields" if verbose > 0 else "text"
     for name in param:
-        code = dump_vpl(out, err, name, opts)
+        code = dump_vpl(out, err, name, method, opts)
         if err:
             err.write(f"VPL('{name}'), code={code}\n")
         if code:
             return code
     return code
 
-def dump_vpl(out, err, name, opts) -> int:
+def dump_vpl(out, err, name, method:str, opts) -> int:
     """ Dump playlist
     """
     vpl = VPL(name)
     astr = vpl.text()
-    if out:
-        out.write(astr)
     code = vpl.parse()
-    if opts["verbose"] <= 0:
+    if method == "text":
+        if out:
+            out.write(astr)
         return code
-    print("#" * 20, "vpl.parse() follows:")
+    assert method == "fields"
+    if opts["verbose"] > 1:
+        print("#" * 20, "vpl.parse() follows", "#" * 20)
     for entry in vpl.content:
-        keys = sorted(entry.keys())
-        for key in keys:
+        for key in sorted(entry):
             there = entry[key]
-            print(f"{key}={there}")
+            shown_key = key[1:] if key[0] < 'A' else key
+            print(f"{shown_key}={there}")
         print("")
     return code
 

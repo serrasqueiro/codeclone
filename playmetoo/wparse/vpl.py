@@ -11,6 +11,7 @@ from wparse.playlist import GenericPlaylist, \
      safe_path, \
      unencode
 
+DEF_ENC_VPL = "ISO-8859-1"
 
 IDX_KEYS_VPL = '1#NAME 2#ATST 3#ALBM 4#TRKN 5#TYPE 6#RATE 7#FREQ 8#CHNL 9#SIZE 10#TIME 11#CUE1 12#CUE0 13#GENR 14#YEAR'
 
@@ -55,8 +56,7 @@ class VPL(GenericPlaylist):
             if unencode(first) != self._headerline:
                 start = 0
                 is_ok = False
-        listed = VPL._entries(cont[start:])
-        self.content = listed
+        self.content = VPL._entries(cont[start:])
         code = int(not is_ok)	# non-zero means an error
         return code
 
@@ -76,7 +76,7 @@ class VPL(GenericPlaylist):
         return res
 
     @staticmethod
-    def _entries(bytelist) -> list:
+    def _entries(bytelist, encoding:str=DEF_ENC_VPL, debug=0) -> list:
         """ Return entries from a byte list """
         res = list()
         idx = 0
@@ -92,12 +92,24 @@ class VPL(GenericPlaylist):
                 "!path": path,
                 "#index": idx,
             }
-            for attr in fields[1:]:
-                astr = attr.decode("ascii")
-                assign = astr.split("=", maxsplit=1)
-                assert len(assign) == 2
-                entry[assign[0]] = assign[1]
+            if debug > 0:
+                print("Debug: idx:", idx, "; FIELDS:",
+                      [entry.decode("ascii") for entry in fields])
+            VPL.fields_from(fields[1:], encoding, entry)
             res.append(entry)
+        return res
+
+    @staticmethod
+    def fields_from(fields:list, encoding:str, entry:dict) -> list:
+        """ Updates 'entry' dictionary with the binary fields """
+        res = []
+        for attr in fields:
+            astr = attr.decode(encoding)
+            assign = astr.split("=", maxsplit=1)
+            assert len(assign) == 2, f"Unable to split (idx={idx}): '{astr}'"
+            key, value = assign
+            entry[key] = value
+            res.append(tuple(assign))
         return res
 
 
