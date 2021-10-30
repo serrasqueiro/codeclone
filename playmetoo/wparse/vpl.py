@@ -102,16 +102,54 @@ class VPL(GenericPlaylist):
     @staticmethod
     def fields_from(fields:list, encoding:str, entry:dict) -> list:
         """ Updates 'entry' dictionary with the binary fields """
+        assert line >= -1
         res = []
         for attr in fields:
             astr = attr.decode(encoding)
             assign = astr.split("=", maxsplit=1)
-            assert len(assign) == 2, f"Unable to split (idx={idx}): '{astr}'"
+            assert len(assign) == 2, f"Unable to split: '{astr}'"
             key, value = assign
             entry[key] = value
             res.append(tuple(assign))
         return res
 
+class VUPlayerControl():
+    """ Basic abstract class """
+    _fields = None
+
+    def __init__(self):
+        """ Init. """
+        # VUPlayer playlist fields
+        self._fields = {
+            'NAME': 'name',	# song name
+            'ATST': 'artist',
+            'ALBM': 'album',
+            'GENR': 'genre',
+            'YEAR': 'year',
+            'TRKN': 'track-number',
+            'TYPE': 'type',	# file-type
+            'RATE': 'rate',
+            'FREQ': 'frequency',
+            'CHNL': 'channels',	# number of channels
+            'SIZE': 'size',
+            'TIME': 'time',
+            'CUE1': 'cue1',
+            'CUE0': 'cue0',
+        }
+
+    def fields(self):
+        return self._fields
+
+    def valid_vpl(self, alist:list) -> bool:
+        """ Returns True if 'list' is a valid VPL playlist! """
+        for row in alist:
+            path, rest = row
+            for field in rest:
+                tup = field.split("=", maxsplit=1)
+                key, value = tup
+                if key not in self._fields:
+                    return False
+        return True
 
 def simpler_entry(ubytes) -> str:
     """ Uncoding bytes and split """
