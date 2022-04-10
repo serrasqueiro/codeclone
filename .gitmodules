@@ -1,3 +1,6 @@
 [submodule "tlslite"]
 	path = tlslite
 	url = https://github.com/serrasqueiro/tlslite.git
+[submodule "playmetoo/sheervalues/scripts"]
+	path = playmetoo/sheervalues/scripts
+	url = git@gist.github.com:fefb1e3262b6f03a70d394f4628a3436.git
