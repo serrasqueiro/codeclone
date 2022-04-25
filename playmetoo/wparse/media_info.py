@@ -1,8 +1,7 @@
 #-*- coding: utf-8 -*-
-# wpl_test.py  (c)2020  Henrique Moreira
+# media_info.py	(c)2020  Henrique Moreira
 
-"""
-Test wpl_test.py
+""" media_info.py - using mutagen
 """
 
 # pylint: disable=unused-variable, invalid-name

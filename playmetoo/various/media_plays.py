@@ -1,16 +1,13 @@
-# media_plays.py  (c)2020  Henrique Moreira
+# media_plays.py  (c)2020, 2022  Henrique Moreira
 
-"""
-  media_plays: basic playlist readers
-
-  Compatibility: python 3.
+""" media_plays: basic playlist readers
 """
 
 # pylint: disable=missing-function-docstring, invalid-name, unidiomatic-typecheck
 
 import sys
 import pargs
-from pargs import split_first
+from wparse.mediaelems import MediaElem, TextualSeq
 
 
 def main():
@@ -25,7 +22,7 @@ media-list      List of media description with links.
     sys.exit(code)
 
 
-def script(outFile, errFile, inArgs):
+def script(out, errfile, inArgs):
     code = None
     if not inArgs:
         return None
@@ -49,173 +46,120 @@ def script(outFile, errFile, inArgs):
         for k, val in opts.items():
             print("option {}: {}".format( k, val ))
         return 0
+    out_streams = (out, errfile)
     if cmd == "media-list":
-        code = media_list(outFile, errFile, opts, param)
-        if verbose>0:
-            errFile.write("Exit-code: {}\n".format( code ))
+        code = media_list(out_streams, opts, param)
+        if verbose > 0:
+            errfile.write("Exit-code: {}\n".format(code))
     return code
 
-
-class MediaElem:
-    """ MediaElem """
-    def __init__(self, header=None, url=None):
-        self.ref = -1
-        self.header = header
-        self.urls = [] if url is None else [url]
-
-
-    def set_from_list(self, aList, aRef=-1):
-        if type( aList )==list or type( aList )==tuple:
-            if len( aList )<2:
-                return False
-        else:
-            assert False
-        self.header = aList[0]
-        self.urls = aList[1:]
-        self.ref = int( aRef )
-        return True
-
-
-    def __str__(self):
-        n = len(self.urls)
-        if n <= 1:
-            u = self.urls[0]
-        else:
-            u = "{} ...".format(self.urls[0])
-        s = "{}\n{}".format(self.header, u)
-        return s
-
-
-    def valid_URL(self, s=None):
-        validProtos = ("file", "http", "https")
-        if type( s )==list:
-            for a in s:
-                isOk = self.valid_URL( a )
-                if not isOk: return False
-            return True
-        elif type( s )==str:
-            isOk = s.find( "://" )>1
-        elif s is None:
-            assert type( self.urls )==list
-            return self.valid_URL( self.urls )
-        else:
-            assert False
-        if isOk:
-            spl = split_first( s, "://" )
-            prot = spl[0]
-            isOk = len( spl )==2 and prot in validProtos
-        else:
-            isOk = self.valid_ref( s )
-        return isOk
-
-
-    def valid_ref(self, s):
-        assert isinstance(s, str)
-        if not s:
-            return True
-        isOk = s.isdigit() or (s[0].isalpha() and s.isalnum())
-        return isOk
-
-
-def media_list(outFile, errFile, opts, param):
+def media_list(out_streams, opts, param):
     """ Media list """
-    code = 0
-    verbose = opts[ "-v" ]
-    strictLevel = opts[ "-s" ]
-    numSep = 2
-    maxLines = 2
+    for fname in param:
+        dump_textual(out_streams, fname, opts)
+    return 0
 
-    def flush (moves, tups, lineNr, numLines=2):
+
+def dump_textual(out_streams, fname, opts):
+    out, errfile = out_streams
+    verbose = opts["-v"]
+    strict_level = opts["-s"]
+
+    textseq = TextualSeq(strict_level=strict_level)
+    isOk = textseq.load(fname)
+    textseq.trim_input(True)
+    assert isOk
+    errCode, tups = parse_input(errfile, textseq)
+    bugs = 0
+    if strict_level > 0:
+        for mElem in tups:
+            assert mElem.header
+            assert len(mElem.urls) >= 1
+            isOk = mElem.valid_url()
+            if not isOk:
+                bugs += 1
+                errfile.write("Line {}: invalid mElem: {}\n".
+                              format(mElem.ref, ";".join(mElem.urls)))
+
+    hdr = textseq.get_header()
+    s_extra = "" if bugs == 0 else " (bugs: {})".format(bugs)
+    if verbose > 0:
+        if hdr.startswith("#"):
+            hdr = hdr[1:].strip()
+        out.write("# {}{}\n\n".format(hdr, s_extra))
+    for mElem in tups:
+        astr = f"{mElem}\n"
+        out.write(astr)
+        if verbose > 0:
+            out.write("--\n")
+        out.write("\n")
+    if errCode != 0:
+        return 1
+    return 0
+
+
+def parse_input(errfile, textseq):
+
+    def flush(moves, tups, lineNr, numLines=2):
+        opt_comments = None
         if numLines > 0:
-            isOk = len(moves) == 2
+            isOk = len(moves) >= 2
+            opt_comments = moves[2:]
         else:
             isOk = True
         if isOk:
-            mElem = MediaElem(moves[0], moves[1])
+            mElem = MediaElem(moves[0], moves[1], opt_comments)
             mElem.ref = lineNr
             tups.append(mElem)
         return isOk
 
-    def parse_input (outFile, errFile, lines):
-        tups = []
-        start_line = 1
-        if lines:
-            hdr = lines[0]
-            if hdr.startswith("#"):
-                comment.header = hdr[1:].strip()
-                assert not lines[start_line], "Non-empty after head"
-                start_line += 2
-        middle = []
-        moves = []
-        for line, a in enumerate(lines[start_line-1:], start_line):
-            s = a.strip("\t ")
-            if s != a:
-                errFile.write("Line {}: Trailing or leading Blanks/ tabs\n".format(line))
+    numSep = 2
+    maxLines = 2
+    tups = []
+    start_line = textseq.original_start
+    lines = textseq.lines()
+    # Start checking algorithm
+    middle = []
+    line, moves = "", []
+    for line, instr in enumerate(lines, start_line):
+        s = instr.strip("\t ")
+        if s != instr:
+            errfile.write("Line {}: Trailing or leading Blanks/ tabs\n".format(line))
+            return (1, [])
+        if not s:
+            if not middle:
+                if moves:
+                    isOk = flush(moves, tups, line, maxLines)
+                    if not isOk:
+                        errfile.write(
+                            "Line {}: invalid pairs.\n(num={}): {}".format(
+                                line,
+                                len(moves),
+                                '@'.join(moves),
+                            )
+                        )
+                        return (1, [])
+                    moves = []
+            middle.append(s)
+            if len(middle) > 2:
+                errfile.write("Line {}: Too many empty lines ({}).\n".
+                              format(line, len(middle)))
                 return (1, [])
-            if not s:
-                if not middle:
-                    if moves:
-                        isOk = flush(moves, tups, line, maxLines)
-                        if not isOk:
-                            errFile.write("Line {}: invalid pairs.\n".format(line))
-                            return (1, [])
-                        moves = []
-                middle.append(s)
-                if len(middle) > 2:
-                    errFile.write("Line {}: Too many empty lines ({}).\n".
-                                  format(line, len(middle)))
-                    return (1, [])
-            else:
-                if middle and len(tups)>0:
-                    if strictLevel > 0:
-                        #print("Check lines in between:", len(middle), "s:", s)
-                        if len(middle) != numSep:
-                            errFile.write("Line {}: Few empty lines ({}), expected {}.\n".
-                                          format(line, len(middle), numSep))
-                            return (1, [])
-                middle = []
-                moves.append(s)
-        if moves:
-            isOk = flush(moves, tups, line)
-            if not isOk:
-                return (1, [])
-        return (0, tups)
-
-    for name in param:
-        desc = [MediaElem("#"), [], (name,)]
-        comment, mList = desc[0], desc[1]
-        assert isinstance(mList, list)
-        encRead = "ISO-8859-1"
-        with open(name, "r", encoding=encRead) as fIn:
-            txtData = fIn.read()
-        lines = txtData.split("\n")
-        assert lines
-        if lines[-1] == "":
-            del lines[-1]
-        errCode, tups = parse_input(outFile, errFile, lines)
-        bugs = 0
-        if strictLevel > 0:
-            for mElem in tups:
-                assert mElem.header!=""
-                assert len(mElem.urls)>=1
-                isOk = mElem.valid_URL()
-                if not isOk:
-                    bugs += 1
-                    errFile.write("Line {}: invalid mElem: {}\n".format( mElem.ref, ";".join(mElem.urls) ))
-
-        for mElem in tups:
-            outFile.write("{}\n".format( mElem ))
-            if verbose > 0:
-                outFile.write("--\n")
-            outFile.write("\n")
-        h = desc[0].header
-        sExtra = "" if bugs==0 else " (bugs: {})".format( bugs )
-        if verbose>0:
-            if h != "#":
-                outFile.write("# {}{}\n".format(h, sExtra))
-        if errCode != 0:
-            return 1
-    return code
+        else:
+            if middle and len(tups) > 0:
+                if textseq.level > 0:
+                    #print("Check lines in between:", len(middle), "s:", s)
+                    if len(middle) != numSep:
+                        errfile.write("Line {}: Few empty lines ({}), expected {}.\n".
+                                      format(line, len(middle), numSep))
+                        return (1, [])
+            middle = []
+            moves.append(s)
+    if moves:
+        isOk = flush(moves, tups, line)
+        if not isOk:
+            return (1, [])
+    return (0, tups)
 
 
 #

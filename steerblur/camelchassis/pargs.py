@@ -6,6 +6,13 @@
   Compatibility: python 2 and 3.
 """
 
+import sys
+
+def main():
+  code = test_pargs(sys.stdout, sys.stderr, sys.argv[1:])
+  if code != 0:
+    sys.stderr.write("Error code: {}\n".format( code ))
+  sys.exit(code if code else 0)
 
 #
 # test_pargs()
@@ -116,38 +123,12 @@ def arg_parse (param, optsIn={}, rest=True):
   return dct
 
 
-#
-# split_first() -- splits only the first find
-#
-def split_first (s, splitBy, stopWhen=1):
-    res = []
-    found = 0
-    assert type( splitBy )==str
-    if splitBy=="":
-        return res
-    if type( s )==str:
-        while found<stopWhen:
-            found += 1
-            pos = s.find( splitBy )
-            if pos<0:
-                break
-            rem = s[ pos+len(splitBy): ]
-            left = s[ :pos ]
-            res.append( left )
-            s = rem
-        res.append(s)
-    else:
-        assert False
-    return res
+def split_first (astr:str, split_by:str, maxsplit=1):
+    return astr.split(split_by, maxsplit=maxsplit)
 
 
 #
 # Test suite
 #
 if __name__ == "__main__":
-  import sys
-  code = test_pargs(sys.stdout, sys.stderr, sys.argv[ 1: ])
-  assert type( code )==int
-  if code!=0:
-    sys.stderr.write("Error code: {}\n".format( code ))
-  sys.exit( code )
+  main()
