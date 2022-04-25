@@ -4,7 +4,7 @@
   dictplay.test.py  (c)2019, 2020  Henrique Moreira
 """
 
-# pylint: disable=missing-docstring, bad-whitespace, invalid-name
+# pylint: disable=missing-docstring, invalid-name
 
 import sys
 from playbasket.dictplay import dict_MyGridChannels
