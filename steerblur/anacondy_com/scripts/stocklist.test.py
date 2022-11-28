@@ -8,9 +8,9 @@ Module for testing 'mintracker' related modules
 
 import sys
 from sys import stdout, stderr
-from snamings import comp_name_ok
-from sindexes.stockspt import STK_ISIN_PSI20
-from sindexes.isin import ISIN_checksum
+from mintracker.snamings import comp_name_ok
+from mintracker.sindexes.stockspt import STK_ISIN_PSI20
+from mintracker.sindexes.isin import ISIN_checksum
 
 
 def test_stocklist(out_file, err_file, in_args):
